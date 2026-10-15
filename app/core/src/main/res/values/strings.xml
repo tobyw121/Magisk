@@ -251,4 +251,34 @@
     <string name="app_not_found">No app found to handle this action</string>
     <string name="reboot_apply_change">Reboot to apply changes</string>
     <string name="restore_app_confirmation">This will restore the hidden app back to the original app. Do you really want to do this?</string>
+
+    <!-- Runtime and installation diagnostics -->
+    <string name="diagnosis_title">Root and Zygisk diagnostics</string>
+    <string name="diagnosis_refresh">Refresh diagnostics</string>
+    <string name="diagnosis_root_unknown">Root status unknown</string>
+    <string name="diagnosis_root_active">Root available</string>
+    <string name="diagnosis_root_access">Root access unavailable</string>
+    <string name="diagnosis_daemon_unreachable">Magisk daemon unreachable</string>
+    <string name="diagnosis_not_detected">Magisk not detected</string>
+    <string name="diagnosis_root_unknown_detail">Root status could not be determined. Refresh the diagnosis and check the logs.</string>
+    <string name="diagnosis_root_active_detail">The Magisk daemon responds and this app has root access.</string>
+    <string name="diagnosis_root_access_detail">The Magisk daemon responds, but this app has no root access. Check Superuser permissions and reopen the app.</string>
+    <string name="diagnosis_daemon_unreachable_detail">The Magisk daemon did not respond successfully. It may be stopped or access may be blocked. Check the logs before reinstalling.</string>
+    <string name="diagnosis_not_detected_detail">No accessible Magisk binary, daemon or mounts were detected in this app. A hidden installation cannot be ruled out.</string>
+    <string name="diagnosis_zygisk_loaded">Loaded in this app</string>
+    <string name="diagnosis_zygisk_not_loaded">Not loaded in this app</string>
+    <string name="diagnosis_zygisk_unknown">Unknown</string>
+    <string name="diagnosis_zygisk_loaded_detail">Zygisk is loaded in this app process.</string>
+    <string name="diagnosis_zygisk_disabled_detail">Zygisk is disabled in the Magisk settings.</string>
+    <string name="diagnosis_zygisk_not_loaded_detail">Zygisk is enabled in settings but is not loaded in this app process. Reboot after changing the setting; otherwise check the logs.</string>
+    <string name="diagnosis_zygisk_unknown_detail">Zygisk configuration cannot be checked without access to Magisk. Missing injection does not mean it is disabled.</string>
+    <string name="diagnosis_ramdisk_hint">Ramdisk availability does not confirm that a patched image was installed or that root is active.</string>
+    <string name="diagnosis_zygisk_rollback">Last reported Zygisk issue: injection was rolled back after repeated Zygote crashes. See logs.</string>
+    <string name="diagnosis_zygisk_jni">Last reported Zygisk issue: a Zygote method could not be hooked. See logs for the incompatible method.</string>
+    <string name="diagnosis_zygisk_plt">Last reported Zygisk issue: native hooks could not be installed. See logs.</string>
+    <string name="diagnosis_zygisk_runtime">Last reported Zygisk issue: the Java runtime interface was unavailable during injection. See logs.</string>
+    <string name="install_binary_invalid">! Missing or invalid installation binary: %1$s (%2$s). Use a complete APK for this device.</string>
+    <string name="install_binaries_verified">- Installation binaries and device architectures verified</string>
+    <string name="install_patch_only">- Image patched and verified only. Root will be available only after installing the image on the correct partition and booting successfully.</string>
+    <string name="diagnosis_zygisk_safe_mode">Last reported Zygisk issue: safe mode disabled all modules and Zygisk during boot.</string>
 </resources>

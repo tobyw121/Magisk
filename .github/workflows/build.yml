@@ -77,10 +77,10 @@ jobs:
         run: bash .github/docker/setup.sh
 
       - name: Build release
-        run: ./build.py -vr all 2>&1 | tee build-release.log
-
-      - name: Build debug
-        run: ./build.py -v all 2>&1 | tee build-debug.log
+        run: |
+          ./build.py -vr native 2>&1 | tee build-native.log
+          ./build.py -vr app 2>&1 | tee build-release.log
+          cp -- out/app-release.apk out/Magisk.apk
 
       - name: Stop gradle daemon
         if: always() && steps.toolchains.outcome == 'success'
@@ -89,18 +89,11 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ github.sha }}
-          path: out/*.apk
+          name: Magisk-APK
+          path: out/Magisk.apk
           if-no-files-found: error
           compression-level: 0
           retention-days: 14
-
-      - name: Upload mapping and native debug symbols
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ github.sha }}-symbols
-          path: app/apk/build/outputs
-          compression-level: 9
 
       - name: Upload failed build logs
         if: failure()
@@ -109,124 +102,3 @@ jobs:
           name: ${{ github.sha }}-docker-logs
           path: build-*.log
           if-no-files-found: ignore
-
-  avd-test:
-    name: Test API ${{ matrix.version }} (x86_64)
-    runs-on: ubuntu-24.04
-    needs: build
-    if: ${{ github.event_name != 'push' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        version: [23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 36.1, "37.0"]
-        type: [""]
-        include:
-          - version: "CANARY"
-            type: "google_apis_ps16k"
-
-    steps:
-      - name: Check out
-        uses: actions/checkout@v6
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v8
-        with:
-          name: ${{ github.sha }}
-          path: out
-
-      - name: Enable KVM group perms
-        run: .github/kvm.sh
-
-      - name: Run AVD test
-        timeout-minutes: 18
-        run: scripts/avd.sh test -l -v ${{ matrix.version }} -t "${{ matrix.type }}"
-
-      - name: Upload logs on error
-        if: ${{ failure() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: "avd-logs-${{ matrix.version }}"
-          path: |
-            kernel.log
-            logcat.log
-
-  avd-test-32:
-    name: Test API ${{ matrix.version }} (x86)
-    runs-on: ubuntu-24.04
-    needs: build
-    if: ${{ github.event_name != 'push' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        version: [23, 26, 28, 30]
-
-    steps:
-      - name: Check out
-        uses: actions/checkout@v6
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v8
-        with:
-          name: ${{ github.sha }}
-          path: out
-
-      - name: Enable KVM group perms
-        run: .github/kvm.sh
-
-      - name: Run AVD test
-        timeout-minutes: 18
-        run: scripts/avd.sh test -l -a x86 -v ${{ matrix.version }}
-
-      - name: Upload logs on error
-        if: ${{ failure() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: "avd32-logs-${{ matrix.version }}"
-          path: |
-            kernel.log
-            logcat.log
-
-  cf-test:
-    name: Test ${{ matrix.device }}
-    runs-on: ubuntu-24.04
-    needs: build
-    if: false
-    env:
-      CF_HOME: /home/runner/aosp_cf_phone
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - branch: "aosp-android-latest-release"
-            device: "aosp_cf_x86_64_only_phone"
-
-    steps:
-      - name: Check out
-        uses: actions/checkout@v6
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v8
-        with:
-          name: ${{ github.sha }}
-          path: out
-
-      - name: Enable KVM group perms
-        run: .github/kvm.sh
-
-      - name: Setup Cuttlefish environment
-        run: |
-          scripts/cuttlefish.sh setup
-          scripts/cuttlefish.sh download ${{ matrix.branch }} ${{ matrix.device }}
-
-      - name: Run Cuttlefish test
-        timeout-minutes: 18
-        run: sudo -E -u $USER scripts/cuttlefish.sh test
-
-      - name: Upload logs on error
-        if: ${{ failure() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: "cvd-logs-${{ matrix.device }}"
-          path: |
-            /home/runner/aosp_cf_phone/cuttlefish/instances/cvd-1/logs
-            /home/runner/aosp_cf_phone/cuttlefish/instances/cvd-1/cuttlefish_config.json

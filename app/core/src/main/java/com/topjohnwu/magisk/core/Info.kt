@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import com.topjohnwu.magisk.StubApk
 import com.topjohnwu.magisk.core.ktx.getProperty
 import com.topjohnwu.magisk.core.model.UpdateInfo
+import com.topjohnwu.magisk.core.model.RuntimeDiagnostics
 import com.topjohnwu.magisk.core.repository.NetworkService
 import com.topjohnwu.superuser.CallbackList
 import com.topjohnwu.superuser.Shell
@@ -36,6 +37,7 @@ object Info {
     var isRooted = false
     var noDataExec = false
     var patchBootVbmeta = false
+    @Volatile var diagnostics = RuntimeDiagnostics()
 
     @JvmStatic var env = Env()
         private set

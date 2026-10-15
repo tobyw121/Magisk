@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
 import android.widget.Toast
+import com.topjohnwu.magisk.core.model.RuntimeDiagnostics
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -287,10 +288,12 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxWidth(),
                     state = uiState.magiskState,
                     version = uiState.magiskInstalledVersion,
+                    diagnostics = uiState.diagnostics,
                     onInstallClicked = { showInstallDialog = true }
                 )
 
-                StatusCard()
+                StatusCard(uiState.diagnostics)
+                DiagnosticsCard(uiState.diagnostics, viewModel::reload)
 
                 AppCard(
                     modifier = Modifier.fillMaxWidth(),
@@ -499,6 +502,7 @@ private fun InstallButton(
 private fun CoreCard(
     state: HomeViewModel.State,
     version: String,
+    diagnostics: RuntimeDiagnostics,
     onInstallClicked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -542,7 +546,7 @@ private fun CoreCard(
                         text = if (isInstalled) {
                             version.ifEmpty { stringResource(CoreR.string.not_available) }
                         } else {
-                            stringResource(CoreR.string.not_installed)
+                            stringResource(rootStatusTitle(diagnostics.root))
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (isInstalled) {
@@ -682,14 +686,76 @@ private fun AppDetailRow(
 
 private data class StatusInfo(val label: String, val status: String)
 
+private fun rootStatusTitle(root: RuntimeDiagnostics.Root) = when (root) {
+    RuntimeDiagnostics.Root.UNKNOWN -> CoreR.string.diagnosis_root_unknown
+    RuntimeDiagnostics.Root.ACTIVE -> CoreR.string.diagnosis_root_active
+    RuntimeDiagnostics.Root.ACCESS_UNAVAILABLE -> CoreR.string.diagnosis_root_access
+    RuntimeDiagnostics.Root.DAEMON_UNREACHABLE -> CoreR.string.diagnosis_daemon_unreachable
+    RuntimeDiagnostics.Root.NOT_DETECTED -> CoreR.string.diagnosis_not_detected
+}
+
+@Composable
+private fun DiagnosticsCard(diagnostics: RuntimeDiagnostics, onRefresh: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+    ) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(CoreR.string.diagnosis_title), Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleMedium)
+                IconButton(onClick = onRefresh) {
+                    Icon(Icons.Default.Refresh, stringResource(CoreR.string.diagnosis_refresh))
+                }
+            }
+            val explanation = when (diagnostics.root) {
+                RuntimeDiagnostics.Root.UNKNOWN -> CoreR.string.diagnosis_root_unknown_detail
+                RuntimeDiagnostics.Root.ACTIVE -> CoreR.string.diagnosis_root_active_detail
+                RuntimeDiagnostics.Root.ACCESS_UNAVAILABLE -> CoreR.string.diagnosis_root_access_detail
+                RuntimeDiagnostics.Root.DAEMON_UNREACHABLE -> CoreR.string.diagnosis_daemon_unreachable_detail
+                RuntimeDiagnostics.Root.NOT_DETECTED -> CoreR.string.diagnosis_not_detected_detail
+            }
+            Text(stringResource(explanation), style = MaterialTheme.typography.bodyMedium)
+            val zygiskExplanation = when (diagnostics.zygisk) {
+                RuntimeDiagnostics.Zygisk.LOADED -> CoreR.string.diagnosis_zygisk_loaded_detail
+                RuntimeDiagnostics.Zygisk.DISABLED -> CoreR.string.diagnosis_zygisk_disabled_detail
+                RuntimeDiagnostics.Zygisk.NOT_LOADED -> CoreR.string.diagnosis_zygisk_not_loaded_detail
+                RuntimeDiagnostics.Zygisk.UNKNOWN -> CoreR.string.diagnosis_zygisk_unknown_detail
+            }
+            Text(stringResource(zygiskExplanation), style = MaterialTheme.typography.bodyMedium)
+            diagnostics.zygiskIssue?.let { issue ->
+                val message = when (issue) {
+                    RuntimeDiagnostics.ZygiskIssue.SAFE_MODE -> CoreR.string.diagnosis_zygisk_safe_mode
+                    RuntimeDiagnostics.ZygiskIssue.CRASH_ROLLBACK -> CoreR.string.diagnosis_zygisk_rollback
+                    RuntimeDiagnostics.ZygiskIssue.JNI_HOOK -> CoreR.string.diagnosis_zygisk_jni
+                    RuntimeDiagnostics.ZygiskIssue.PLT_HOOK -> CoreR.string.diagnosis_zygisk_plt
+                    RuntimeDiagnostics.ZygiskIssue.RUNTIME_CALLBACKS -> CoreR.string.diagnosis_zygisk_runtime
+                }
+                Text(stringResource(message), color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium)
+            }
+            Text(stringResource(CoreR.string.diagnosis_ramdisk_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
 @Composable
 private fun StatusCard(
+    diagnostics: RuntimeDiagnostics,
     modifier: Modifier = Modifier
 ) {
     val statuses = listOf(
         StatusInfo(
             label = stringResource(CoreR.string.zygisk),
-            status = stringResource(if (Info.isZygiskEnabled) CoreR.string.enabled else CoreR.string.disabled)
+            status = stringResource(when (diagnostics.zygisk) {
+                RuntimeDiagnostics.Zygisk.LOADED -> CoreR.string.diagnosis_zygisk_loaded
+                RuntimeDiagnostics.Zygisk.DISABLED -> CoreR.string.disabled
+                RuntimeDiagnostics.Zygisk.NOT_LOADED -> CoreR.string.diagnosis_zygisk_not_loaded
+                RuntimeDiagnostics.Zygisk.UNKNOWN -> CoreR.string.diagnosis_zygisk_unknown
+            })
         ),
         StatusInfo(
             label = stringResource(CoreR.string.ramdisk),

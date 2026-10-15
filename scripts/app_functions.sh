@@ -2,6 +2,22 @@
 # Magisk app internal scripts
 ##################################
 
+# Read-only probe. -v queries an existing daemon and never starts one.
+# Report failed probe output separately so it cannot look like a version.
+app_diagnostics() {
+  local binary=false mounts=false version code
+  command -v magisk >/dev/null 2>&1 && binary=true
+  grep -q ' - tmpfs magisk ' /proc/self/mountinfo 2>/dev/null && mounts=true
+  echo "BINARY_FOUND=$binary"
+  echo "MOUNTS_FOUND=$mounts"
+  version=$(timeout 5 magisk -v 2>&1)
+  code=$?
+  echo "DAEMON_CODE=$code"
+  [ "$code" -eq 0 ] && echo "DAEMON_VERSION=$version"
+  [ "$code" -ne 0 ] && echo "DAEMON_ERROR=$(printf '%s' "$version" | tr '\n' ' ' | cut -c 1-512)"
+  return 0
+}
+
 # $1 = delay
 # $2 = command
 run_delay() {
@@ -70,11 +86,18 @@ direct_install() {
       echo "! $2 is read only"
       return 2
       ;;
+    0) ;;
+    *)
+      echo "! Boot image write or read-back verification failed"
+      return 3
+      ;;
   esac
 
   rm -f $1/new-boot.img
   fix_env $1
   run_migrations
+
+  echo "- Boot image installed. Reboot to activate and check root access."
 
   return 0
 }

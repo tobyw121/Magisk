@@ -122,7 +122,7 @@ case $((STATUS & 3)) in
       fi
       ./magiskboot repack $BOOTIMAGE
       ui_print "- Flashing restored boot image"
-      flash_image new-boot.img $BOOTIMAGE || abort "! Insufficient partition size"
+      flash_image new-boot.img $BOOTIMAGE || abort "! Unable to write or verify restored boot image"
     fi
     ;;
   2 )  # Unsupported

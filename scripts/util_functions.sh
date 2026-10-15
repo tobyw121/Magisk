@@ -402,11 +402,58 @@ find_boot_image() {
   fi
 }
 
+# Validate the repacked image in a separate directory so the patcher's
+# extracted files and original image are never overwritten by this check.
+# $1 = patched image; $2 = magiskinit that was embedded into the ramdisk
+verify_magisk_image() {
+  local IMAGE=$(readlink -f "$1")
+  local INIT=$(readlink -f "$2")
+  local SOURCEDIR="$PWD"
+  local TOOL="$PWD/magiskboot"
+  local VERIFYDIR=$(mktemp -d "$PWD/.verify-boot.XXXXXX")
+  [ -n "$VERIFYDIR" ] || return 1
+  (
+    cd "$VERIFYDIR" || exit 1
+    "$TOOL" unpack "$IMAGE" >/dev/null 2>&1
+    local status=$?
+    [ "$status" -eq 0 ] || [ "$status" -eq 3 ] || exit 1
+    local ramdisk
+    for ramdisk in ramdisk.cpio vendor_ramdisk/init_boot.cpio vendor_ramdisk/ramdisk.cpio; do
+      [ -f "$ramdisk" ] || continue
+      "$TOOL" cpio "$ramdisk" test >/dev/null 2>&1
+      [ $? -eq 1 ] || exit 1
+      local entry
+      for entry in .backup/.magisk overlay.d/sbin/magisk.xz \
+        overlay.d/sbin/stub.xz overlay.d/sbin/init-ld.xz; do
+        "$TOOL" cpio "$ramdisk" "exists $entry" >/dev/null 2>&1 || exit 1
+      done
+      "$TOOL" cpio "$ramdisk" "extract init init.check" >/dev/null 2>&1 || exit 1
+      cmp -s "$INIT" init.check || exit 1
+      local payload
+      for payload in magisk stub init-ld; do
+        "$TOOL" cpio "$ramdisk" "extract overlay.d/sbin/$payload.xz payload.xz" >/dev/null 2>&1 || exit 1
+        "$TOOL" decompress payload.xz payload.check >/dev/null 2>&1 || exit 1
+        local original="$SOURCEDIR/$payload"
+        [ "$payload" = stub ] && original="$SOURCEDIR/stub.apk"
+        cmp -s "$original" payload.check || exit 1
+        rm -f payload.xz payload.check
+      done
+      exit 0
+    done
+    exit 1
+  )
+  local result=$?
+  rm -rf "$VERIFYDIR"
+  return "$result"
+}
+
+# $1 = image (possibly gzip compressed); $2 = target partition or file
+# Returns 1 for insufficient size, 2 for read-only, 3 for I/O/verification errors.
 flash_image() {
   local CMD1
   case "$1" in
     *.gz) CMD1="gzip -d < '$1' 2>/dev/null";;
-    *)    CMD1="cat '$1'";;
+    *)    [ -s "$1" ] || return 3; CMD1="cat '$1'";;
   esac
   if [ -b "$2" ]; then
     local img_sz=$(stat -c '%s' "$1")
@@ -417,12 +464,29 @@ flash_image() {
     [ "$blk_ro" -eq 1 ] && return 2
     eval "$CMD1" | cat - /dev/zero > "$2" 2>/dev/null
   elif [ -c "$2" ]; then
-    flash_eraseall "$2" >&2
-    eval "$CMD1" | nandwrite -p "$2" - >&2
+    flash_eraseall "$2" >&2 || return 3
+    eval "$CMD1" | nandwrite -p "$2" - >&2 || return 3
   else
     ui_print "- Not block or char device, storing image"
-    eval "$CMD1" > "$2" 2>/dev/null
+    # A redirection failure on eval can terminate a POSIX shell. Contain it
+    # so callers still receive the documented verification/I/O error code.
+    (eval "$CMD1" > "$2" 2>/dev/null) || return 3
   fi
+  # Verify the image bytes, not the zero padding beyond them. MTD devices
+  # require bad-block-aware reads; compressed restore images keep their
+  # existing path and are not claimed as verified here.
+  case "$1" in
+    *.gz) ;;
+    *)
+      if [ ! -c "$2" ]; then
+        local verify_size=$(stat -c '%s' "$1")
+        [ -n "$verify_size" ] && [ "$verify_size" -gt 0 ] || return 3
+        sync || return 3
+        head -c "$verify_size" "$2" | cmp -s "$1" - || return 3
+        ui_print "- Written boot image verified by read-back"
+      fi
+      ;;
+  esac
   return 0
 }
 
@@ -442,6 +506,10 @@ install_magisk() {
       ;;
     2)
       abort "! $BOOTIMAGE is read only"
+      ;;
+    0) ;;
+    *)
+      abort "! Boot image write or read-back verification failed"
       ;;
   esac
 

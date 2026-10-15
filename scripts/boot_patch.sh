@@ -250,6 +250,10 @@ fi
 ui_print "- Repacking boot image"
 ./magiskboot repack "$BOOTIMAGE" || abort "! Unable to repack boot image"
 
+ui_print "- Verifying patched boot image and Magisk ramdisk"
+verify_magisk_image new-boot.img "$PWD/magiskinit" || abort "! Patched boot image verification failed"
+ui_print "- Patched image verified; installation and reboot are still required"
+
 # Restore the original boot partition path
 [ -e "$BOOTNAND" ] && BOOTIMAGE="$BOOTNAND"
 

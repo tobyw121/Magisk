@@ -24,6 +24,8 @@ import com.topjohnwu.magisk.core.utils.MediaStoreUtils.outputStream
 import com.topjohnwu.magisk.core.utils.ProgressInputStream
 import com.topjohnwu.magisk.core.utils.ProgressOutputStream
 import com.topjohnwu.magisk.core.utils.RootUtils
+import com.topjohnwu.magisk.core.utils.InstallChecks
+import com.topjohnwu.magisk.core.R
 import com.topjohnwu.magisk.core.utils.UsbBlockDevice
 import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.ShellUtils
@@ -180,6 +182,35 @@ abstract class MagiskInstallImpl protected constructor(
             Timber.e(e)
             return false
         }
+
+        // Refuse incomplete or wrong-architecture packages before patching an image.
+        val binaries = mutableListOf(
+            "magisk" to Const.CPU_ABI, "magiskinit" to Const.CPU_ABI,
+            "magiskboot" to Const.CPU_ABI, "magiskpolicy" to Const.CPU_ABI,
+            "init-ld" to Const.CPU_ABI,
+        )
+        if (Process.is64Bit()) {
+            Const.CPU_ABI_32?.let { binaries.add("magisk32" to it) }
+        }
+        for ((name, abi) in binaries) {
+            val valid = runCatching {
+                installDir.getChildFile(name).newInputStream().use { input ->
+                    val header = ByteArray(20)
+                    var offset = 0
+                    while (offset < header.size) {
+                        val read = input.read(header, offset, header.size - offset)
+                        if (read <= 0) break
+                        offset += read
+                    }
+                    offset == header.size && InstallChecks.matchesAbi(header, abi)
+                }
+            }.getOrDefault(false)
+            if (!valid) {
+                console.add(context.getString(R.string.install_binary_invalid, name, abi))
+                return false
+            }
+        }
+        console.add(context.getString(R.string.install_binaries_verified))
 
         if (useRootFs) {
             // Move everything to tmpfs to workaround Samsung bullshit
@@ -459,6 +490,7 @@ abstract class MagiskInstallImpl protected constructor(
     }
 
     private fun onOutputWritten(outFile: MediaStoreUtils.UriFile): Boolean {
+        console.add(context.getString(R.string.install_patch_only))
         console.add("")
         console.add("****************************")
         console.add(" Output file is written to ")

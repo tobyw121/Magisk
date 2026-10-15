@@ -38,6 +38,7 @@ android {
 }
 
 dependencies {
+    testImplementation(libs.junit)
     api(project(":shared"))
     coreLibraryDesugaring(libs.jdk.libs)
 

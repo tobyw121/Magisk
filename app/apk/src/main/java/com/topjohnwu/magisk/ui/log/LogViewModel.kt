@@ -12,6 +12,8 @@ import com.topjohnwu.magisk.core.model.su.SuLog
 import com.topjohnwu.magisk.core.repository.LogRepository
 import com.topjohnwu.magisk.core.su.SuEvents
 import com.topjohnwu.magisk.core.utils.MediaStoreUtils
+import com.topjohnwu.magisk.core.utils.RuntimeDiagnosticsCollector
+import com.topjohnwu.superuser.Shell
 import com.topjohnwu.magisk.core.utils.MediaStoreUtils.outputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,6 +73,9 @@ class LogViewModel(
                 file.write("isAB=${Info.isAB}\n")
                 file.write("isSAR=${Info.isSAR}\n")
                 file.write("ramdisk=${Info.ramdisk}\n")
+                val diagnostics = RuntimeDiagnosticsCollector.collect(Shell.getShell())
+                Info.diagnostics = diagnostics
+                file.write("\n---Runtime Diagnostics---\n${diagnostics.report()}\n")
                 val uname = Os.uname()
                 file.write("kernel=${uname.sysname} ${uname.machine} ${uname.release} ${uname.version}\n")
 

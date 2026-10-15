@@ -13,6 +13,8 @@ import com.topjohnwu.magisk.core.Info
 import com.topjohnwu.magisk.core.ktx.await
 import com.topjohnwu.magisk.core.ktx.toast
 import com.topjohnwu.magisk.core.repository.NetworkService
+import com.topjohnwu.magisk.core.model.RuntimeDiagnostics
+import com.topjohnwu.magisk.core.utils.RuntimeDiagnosticsCollector
 import com.topjohnwu.magisk.utils.asFlow
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +22,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.topjohnwu.magisk.core.R as CoreR
 
 class HomeViewModel(
@@ -42,6 +46,7 @@ class HomeViewModel(
         val magiskState: State = computeMagiskState(),
         val magiskInstalledVersion: String = computeMagiskInstalledVersion(),
         val managerInstalledVersion: String = computeManagerInstalledVersion(),
+        val diagnostics: RuntimeDiagnostics = Info.diagnostics,
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -82,12 +87,17 @@ class HomeViewModel(
     }
 
     override suspend fun doLoadWork() {
+        val diagnostics = withContext(Dispatchers.IO) {
+            RuntimeDiagnosticsCollector.collect(Shell.getShell())
+        }
+        Info.diagnostics = diagnostics
         _uiState.update {
             it.copy(
                 appState = State.LOADING,
                 magiskState = computeMagiskState(),
                 magiskInstalledVersion = computeMagiskInstalledVersion(),
                 managerInstalledVersion = computeManagerInstalledVersion(),
+                diagnostics = diagnostics,
             )
         }
         Info.fetchUpdate(svc)?.apply {
