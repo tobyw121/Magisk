@@ -6,44 +6,94 @@ on:
     paths:
       - "app/**"
       - "native/**"
+      - "scripts/**"
+      - "tools/**"
       - "build.py"
+      - ".gitmodules"
+      - ".github/actions/setup/**"
+      - ".github/docker/**"
+      - ".github/ci.prop"
       - ".github/workflows/build.yml"
   pull_request:
     branches: [master]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: magisk-build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
-    name: Build Magisk artifacts
-    runs-on: macos-26
-    strategy:
-      fail-fast: false
+    name: Build Magisk artifacts (Docker)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    container:
+      image: eclipse-temurin:25-jdk-noble
+    defaults:
+      run:
+        shell: bash
+    env:
+      ANDROID_HOME: /opt/android-sdk
+      ANDROID_USER_HOME: /root/.android
+      GRADLE_USER_HOME: /root/.gradle
+      CARGO_HOME: /root/.cargo
+      GRADLE_OPTS: -Dorg.gradle.workers.max=2
     steps:
+      - name: Install container dependencies
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            build-essential ca-certificates curl file git python3 unzip xz-utils zip
+
       - name: Check out
         uses: actions/checkout@v6
         with:
           submodules: "recursive"
+          persist-credentials: false
 
-      - name: Setup environment
-        uses: ./.github/actions/setup
+      - name: Cache Android SDK and ONDK
+        uses: actions/cache@v5
         with:
-          is-asset-build: true
+          path: /opt/android-sdk
+          key: docker-android-${{ runner.arch }}-${{ hashFiles('scripts/env.py', '.github/docker/setup.sh') }}
+
+      - name: Cache Gradle and Cargo downloads
+        uses: actions/cache@v5
+        with:
+          path: |
+            /root/.gradle/caches
+            /root/.gradle/wrapper
+            /root/.cargo/registry
+            /root/.cargo/git
+          key: docker-deps-${{ runner.arch }}-${{ hashFiles('app/gradle/**', '**/Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            docker-deps-${{ runner.arch }}-${{ hashFiles('app/gradle/**', '**/Cargo.lock') }}-
+
+      - name: Set up Android toolchains
+        id: toolchains
+        run: bash .github/docker/setup.sh
 
       - name: Build release
-        run: ./build.py -vr all
+        run: ./build.py -vr all 2>&1 | tee build-release.log
 
       - name: Build debug
-        run: ./build.py -v all
+        run: ./build.py -v all 2>&1 | tee build-debug.log
 
       - name: Stop gradle daemon
-        run: ./app/gradlew --stop
+        if: always() && steps.toolchains.outcome == 'success'
+        run: ./scripts/env.py ./app/gradlew --stop
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v7
         with:
           name: ${{ github.sha }}
-          path: out
-          compression-level: 9
+          path: out/*.apk
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
 
       - name: Upload mapping and native debug symbols
         uses: actions/upload-artifact@v7
@@ -51,6 +101,14 @@ jobs:
           name: ${{ github.sha }}-symbols
           path: app/apk/build/outputs
           compression-level: 9
+
+      - name: Upload failed build logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ github.sha }}-docker-logs
+          path: build-*.log
+          if-no-files-found: ignore
 
   test-build:
     name: Test building on ${{ matrix.os }}
