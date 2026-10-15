@@ -11,6 +11,7 @@ import com.topjohnwu.magisk.core.data.magiskdb.PolicyDao
 import com.topjohnwu.magisk.core.data.magiskdb.SettingsDao
 import com.topjohnwu.magisk.core.data.magiskdb.StringDao
 import com.topjohnwu.magisk.core.ktx.deviceProtectedContext
+import com.topjohnwu.magisk.core.repository.FirmwareCrawler
 import com.topjohnwu.magisk.core.repository.LogRepository
 import com.topjohnwu.magisk.core.repository.NetworkService
 import io.noties.markwon.Markwon
@@ -20,7 +21,6 @@ import io.noties.markwon.utils.NoCopySpannableFactory
 object ServiceLocator {
 
     val deContext by lazy { AppContext.deviceProtectedContext }
-    val timeoutPrefs by lazy { deContext.getSharedPreferences("su_timeout", 0) }
 
     // Database
     val policyDB = PolicyDao()
@@ -39,6 +39,7 @@ object ServiceLocator {
             createApiService(retrofit, Const.Url.GITHUB_API_URL),
         )
     }
+    val firmwareCrawler by lazy { FirmwareCrawler(networkService) }
 }
 
 private fun createSuLogDatabase(context: Context) =

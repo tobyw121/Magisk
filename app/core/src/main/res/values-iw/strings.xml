@@ -43,24 +43,22 @@
     <string name="install_inactive_slot">התקנה לסלוט לא פעיל (לאחר OTA)</string>
     <string name="install_inactive_slot_msg">ההתקן שלך ייאלץ אתחול לסלוט הלא פעיל הנוכחי שלך לאחר הפעלה מחדש!\nיש להשתמש באפשרות זו רק לאחר ביצוע OTA בלבד.\nלהמשיך?</string>
     <string name="setup_title">התקנה נוספת</string>
-    <string name="select_patch_file">בחירה והתקנת קובץ</string>
-    <string name="patch_file_msg">בחירת קובץ גולמי (*.img) או ODIN tarfile (*.tar) או payload.bin (*.bin)</string>
     <string name="reboot_delay_toast">מאתחל בעוד 5 שניות…</string>
     <string name="flash_screen_title">התקנה</string>
 
     <!--Superuser-->
-    <string name="su_request_title">בקשות משתמש על</string>
-    <string name="touch_filtered_warning">מכיוון שיישום מסתיר בקשה של משתמש על, Magisk לא יכול לאמת את תגובתך</string>
+
+
     <string name="deny">דחייה</string>
-    <string name="prompt">מיידי</string>
+
     <string name="grant">הענקה</string>
-    <string name="su_warning">מעניק גישה מלאה להתקן שלך.\nיש לדחות באי וודאות!</string>
-    <string name="forever">לצמיתות</string>
-    <string name="once">פעם אחת</string>
-    <string name="tenmin">10 דקות</string>
-    <string name="twentymin">20 דקות</string>
-    <string name="thirtymin">חצי שעה</string>
-    <string name="sixtymin">שעה</string>
+
+
+
+
+
+
+
     <string name="su_allow_toast">%1$s קיבל הרשאות משתמש על</string>
     <string name="su_deny_toast">%1$s נשללו הרשאות משתמש על</string>
     <string name="su_snack_grant">הרשאות משתמש על עבור %1$s הוענקו</string>
@@ -150,24 +148,11 @@
     <string name="settings_app_name_hint">שם חדש</string>
     <string name="settings_app_name_helper">היישום יארז מחדש בשם זה</string>
     <string name="settings_app_name_error">פורמט לא חוקי</string>
-    <string name="settings_su_app_adb">יישומים ו-ADB</string>
-    <string name="settings_su_app">יישומים בלבד</string>
-    <string name="settings_su_adb">ADB בלבד</string>
-    <string name="settings_su_disable">מושבת</string>
-    <string name="settings_su_request_10">10 שניות</string>
-    <string name="settings_su_request_15">15 שניות</string>
-    <string name="settings_su_request_20">20 שניות</string>
-    <string name="settings_su_request_30">30 שניות</string>
-    <string name="settings_su_request_45">45 שניות</string>
-    <string name="settings_su_request_60">60 שניות</string>
-    <string name="superuser_access">גישת משתמש על</string>
-    <string name="auto_response">תגובה אוטומטית</string>
-    <string name="request_timeout">בקשת פסק זמן</string>
+
+
     <string name="superuser_notification">התראות משתמש על</string>
-    <string name="settings_su_reauth_title">אימות מחדש לאחר שדרוג</string>
-    <string name="settings_su_reauth_summary">אימות מחדש הרשאות של משתמש על לאחר שדרוג יישום</string>
-    <string name="settings_su_tapjack_title">הגנת Tapjacking</string>
-    <string name="settings_su_tapjack_summary">תיבת הדו שיח של משתמש העל לא תגיב לקלט כשהיא מוסתרת על ידי חלון או שכבת על אחרת</string>
+
+
     <string name="settings_su_auth_title">אימות משתמש</string>
     <string name="settings_su_auth_summary">בקשת אימות משתמש במהלך בקשות משתמש על</string>
     <string name="settings_su_auth_insecure">לא מוגדרת שיטת אימות בהתקן</string>
@@ -210,9 +195,7 @@
     <string name="reboot">הפעלה מחדש</string>
     <string name="close">סגירה</string>
     <string name="release_notes">הערות שחרור</string>
-    <string name="flashing">צורב…</string>
-    <string name="running">רץ…</string>
-    <string name="done">בוצע!</string>
+    <string name="flashing">צורב…</string>    <string name="done">בוצע!</string>
     <string name="done_action">בוצעה ריצת פעולה של %1$s</string>
     <string name="failure">נכשל!</string>
     <string name="hide_app_title">מסתיר את יישום Magisk…</string>

@@ -18,7 +18,6 @@ import timber.log.Timber
 
 object SuCallbackHandler {
 
-    const val REQUEST = "request"
     const val LOG = "log"
     const val NOTIFY = "notify"
 
@@ -37,7 +36,13 @@ object SuCallbackHandler {
 
         when (action) {
             LOG -> handleLogging(context, data)
-            NOTIFY -> handleNotify(context, data)
+            NOTIFY -> {
+                if (data.getBoolean("log", false)) {
+                    handleLogging(context, data)
+                } else if (data.getBoolean("notify", true)) {
+                    handleNotify(context, data)
+                }
+            }
         }
     }
 
@@ -58,6 +63,7 @@ object SuCallbackHandler {
         val toUid = data.getIntComp("to.uid", -1)
         val pid = data.getIntComp("pid", -1)
         val command = data.getString("command", "")
+        val legacyCmd = data.getBoolean("legacy_cmd", false)
         val target = data.getIntComp("target", -1)
         val seContext = data.getString("context", "")
         val gids = data.getString("gids", "")
@@ -71,7 +77,7 @@ object SuCallbackHandler {
         }.getOrNull() ?: createSuLog(fromUid, toUid, pid, command, policy, target, seContext, gids)
 
         if (notify)
-            notify(context, log.action >= SuPolicy.ALLOW, log.appName)
+            notify(context, log.action >= SuPolicy.ALLOW, log.appName, legacyCmd)
 
         runBlocking { ServiceLocator.logRepo.insert(log) }
         SuEvents.notifyLogUpdated()
@@ -88,17 +94,24 @@ object SuCallbackHandler {
             pm.getPackageInfo(uid, pid)?.applicationInfo?.getLabel(pm)
         }.getOrNull() ?: "[UID] $uid"
 
-        notify(context, policy >= SuPolicy.ALLOW, appName)
+        notify(context, policy >= SuPolicy.ALLOW, appName, false)
     }
 
-    private fun notify(context: Context, granted: Boolean, appName: String) {
+    private fun notify(
+        context: Context, granted: Boolean,
+        appName: String, legacyCmd: Boolean
+    ) {
+        val resId = if (granted) R.string.su_allow_toast else R.string.su_deny_toast
+        var str = context.getString(resId, appName)
+        if (legacyCmd) {
+            str += "\n${context.getString(R.string.su_legacy_cmd)}"
+        }
         when (Config.suNotification) {
             Config.Value.NOTIFICATION_TOAST -> {
-                val resId = if (granted) R.string.su_allow_toast else R.string.su_deny_toast
-                context.toast(context.getString(resId, appName), Toast.LENGTH_SHORT)
+                context.toast(str, Toast.LENGTH_SHORT)
             }
             Config.Value.NOTIFICATION_STATUS_BAR -> {
-                Notifications.suNotification(granted, appName)
+                Notifications.suNotification(granted, str)
             }
         }
     }

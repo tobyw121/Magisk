@@ -37,7 +37,7 @@ Supported actions:
     dumped to the file 'header', which can be used to modify header
     configurations during repacking.
     Return values:
-    0:valid    1:error    2:chromeos
+    0:valid    1:error    3:vendor_boot
 
   repack [-n] <origbootimg> [outbootimg]
     Repack boot image components using files from the current directory
@@ -52,6 +52,8 @@ Supported actions:
     If '-n' is provided, all compression operations will be skipped.
     If env variable PATCHVBMETAFLAG is set to true, all disable flags in
     the boot image's vbmeta header will be set.
+    ChromeOS boot images will be automatically re-signed with the
+    developer keys bundled in the executable.
 
   verify <bootimg> [x509.pem]
     Check whether the boot image is signed with AVB 1.0 signature.
@@ -60,12 +62,17 @@ Supported actions:
     Return value:
     0:valid    1:error
 
-  sign <bootimg> [name] [x509.pem pk8]
+  sign-avb1 <bootimg> [name] [x509.pem pk8]
     Sign <bootimg> with AVB 1.0 signature.
     Optionally provide the name of the image (default: '/boot').
     Optionally provide the certificate/private key pair for signing.
     If the certificate/private key pair is not provided, the AOSP
     verity key bundled in the executable will be used.
+
+  sign-chromeos <bootimg> [outbootimg]
+    Sign <bootimg> with ChromeOS verified boot kernel signature, using
+    the developer keys bundled in the executable.
+    Output to [outbootimg], or overwrite <bootimg> if not specified.
 
   extract <payload.bin> [partition] [outfile]
     Extract [partition] from <payload.bin> to [outfile].
@@ -84,6 +91,8 @@ Supported actions:
     Supported commands:
       exists ENTRY
         Return 0 if ENTRY exists, else return 1
+      ls [-r] [PATH]
+        List PATH ("/" by default); specify [-r] to list recursively
       rm [-r] ENTRY
         Remove ENTRY, specify [-r] to remove recursively
       mkdir MODE ENTRY
@@ -98,13 +107,13 @@ Supported actions:
         Extract ENTRY to OUT, or extract all entries to current directory
       test
         Test the cpio's status
-        Return value is 0 or bitwise or-ed of following values:
-        0x1:Magisk    0x2:unsupported
+        Return values:
+        0:stock    1:Magisk    2:unsupported
       patch
         Apply ramdisk patches
         Configure with env variables: KEEPVERITY KEEPFORCEENCRYPT
-      backup ORIG
-        Create ramdisk backups from ORIG
+      backup ORIG [-n]
+        Create ramdisk backups from ORIG, specify [-n] to skip compression
       restore
         Restore ramdisk from ramdisk backup stored within incpio
 
@@ -123,8 +132,10 @@ Supported actions:
         Return values:
         0:valid    1:error
 
-  split <file>
-    Split image.*-dtb into kernel + kernel_dtb
+  split [-n] <file>
+    Split image.*-dtb into kernel + kernel_dtb.
+    If '-n' is provided, decompression operations will be skipped;
+    the kernel will remain untouched, split in its original format.
 
   sha1 <file>
     Print the SHA1 checksum for <file>
@@ -138,14 +149,14 @@ Supported actions:
     If [format] is not specified, then gzip will be used.
     If [outfile] is not specified, then <infile> will be replaced
     with another file suffixed with a matching file extension.
-    Supported formats: gzip zopfli xz lzma bzip2 lz4 lz4_legacy lz4_lg 
+    Supported formats: gzip xz lzma bzip2 lz4 lz4_legacy lz4_lg
 
   decompress <infile> [outfile]
     Detect format and decompress <infile> to [outfile].
     <infile>/[outfile] can be '-' to be STDIN/STDOUT.
     If [outfile] is not specified, then <infile> will be replaced
     with another file removing its archive format file extension.
-    Supported formats: gzip zopfli xz lzma bzip2 lz4 lz4_legacy lz4_lg 
+    Supported formats: gzip xz lzma bzip2 lz4 lz4_legacy lz4_lg
 ```
 
 ### magiskinit
@@ -281,25 +292,28 @@ Actions:
 An applet of `magisk`, the MagiskSU entry point. Good old `su` command.
 
 ```
-Usage: su [options] [-] [user [argument...]]
+Usage: su [options] [--] [user [argument...]]
 
 Options:
-  -c, --command COMMAND         Pass COMMAND to the invoked shell
+  -s, --shell SHELL             Use SHELL instead of the default /system/bin/sh
+  -i, --interactive             Force pseudo-terminal allocation when using -c
   -g, --group GROUP             Specify the primary group
-  -G, --supp-group GROUP        Specify a supplementary group.
+  -G, --supp-group GROUP        Specify a supplementary group
                                 The first specified supplementary group is also used
-                                as a primary group if the option -g is not specified.
+                                as a primary group if the option -g is not specified
   -Z, --context CONTEXT         Change SELinux context
   -t, --target PID              PID to take mount namespace from
-  -h, --help                    Display this help message and exit
-  -, -l, --login                Pretend the shell to be a login shell
+                                pid 0 means magisk global mount namespace
+  -d, --drop-cap                Drop all Linux capabilities
   -m, -p,
   --preserve-environment        Preserve the entire environment
-  -s, --shell SHELL             Use SHELL instead of the default /system/bin/sh
   -v, --version                 Display version number and exit
   -V                            Display version code and exit
-  -mm, -M,
-  --mount-master                Force run in the global mount namespace
+  -h, --help                    Display this help message and exit
+
+--: Force stop options parsing, and also stop when an unknown option is found
+User: The user to switch to (default root), it can be name or uid
+Argument: Pass it to the shell as is
 ```
 
 ### resetprop
@@ -307,20 +321,34 @@ Options:
 An applet of `magisk`. An advanced system property manipulation utility. Check the [Resetprop Details](details.md#resetprop) for more background information.
 
 ```
-Usage: resetprop [flags] [options...]
+Usage: resetprop [flags] [arguments...]
 
-Options:
-   -h, --help        show this message
+Read mode arguments:
    (no arguments)    print all properties
-   NAME              get property
-   NAME VALUE        set property entry NAME with VALUE
-   --file FILE       load props from FILE
-   --delete NAME     delete property
+   NAME              get property of NAME
 
-Flags:
-   -v      print verbose output to stderr
-   -n      set props without going through property_service
-           (this flag only affects setprop)
-   -p      read/write props from/to persistent storage
-           (this flag only affects getprop and delprop)
+Write mode arguments:
+   NAME VALUE        set property NAME as VALUE
+   -f,--file   FILE  load and set properties from FILE
+   -d,--delete NAME  delete property
+
+Wait mode arguments (toggled with -w):
+    NAME             wait until property NAME changes
+    NAME OLD_VALUE   if value of property NAME is not OLD_VALUE, get value
+                     or else wait until property NAME changes
+
+General flags:
+   -h,--help         show this message
+   -v,--verbose      print verbose output to stderr
+   -w                switch to wait mode
+   -c,--compact      compact property area (optional: context label)
+
+Read mode flags:
+   -p      also read persistent properties from storage
+   -P      only read persistent properties from storage
+   -Z      get property context instead of value
+
+Write mode flags:
+   -n      set properties bypassing property_service
+   -p      always write persistent prop changes to storage
 ```

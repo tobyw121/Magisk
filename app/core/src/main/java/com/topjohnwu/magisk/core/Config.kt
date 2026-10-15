@@ -3,6 +3,7 @@ package com.topjohnwu.magisk.core
 import android.os.Bundle
 import androidx.core.content.edit
 import com.topjohnwu.magisk.core.di.ServiceLocator
+import com.topjohnwu.magisk.core.model.ColorMode
 import com.topjohnwu.magisk.core.repository.DBConfig
 import com.topjohnwu.magisk.core.repository.PreferenceConfig
 import com.topjohnwu.magisk.core.utils.LocaleSetting
@@ -18,7 +19,6 @@ object Config : PreferenceConfig, DBConfig {
 
     object Key {
         // db configs
-        const val ROOT_ACCESS = "root_access"
         const val SU_MULTIUSER_MODE = "multiuser_mode"
         const val SU_MNT_NS = "mnt_ns"
         const val SU_BIOMETRIC = "su_biometric"
@@ -28,11 +28,7 @@ object Config : PreferenceConfig, DBConfig {
         const val KEYSTORE = "keystore"
 
         // prefs
-        const val SU_REQUEST_TIMEOUT = "su_request_timeout"
-        const val SU_AUTO_RESPONSE = "su_auto_response"
         const val SU_NOTIFICATION = "su_notification"
-        const val SU_REAUTH = "su_reauth"
-        const val SU_TAPJACK = "su_tapjack"
         const val SU_RESTRICT = "su_restrict"
         const val CHECK_UPDATES = "check_update"
         const val RELEASE_CHANNEL = "release_channel"
@@ -47,8 +43,7 @@ object Config : PreferenceConfig, DBConfig {
         const val DOH = "doh"
         const val RAND_NAME = "rand_name"
 
-        val NO_MIGRATION = setOf(ASKED_HOME, SU_REQUEST_TIMEOUT,
-            SU_AUTO_RESPONSE, SU_REAUTH, SU_TAPJACK)
+        val NO_MIGRATION = setOf(ASKED_HOME)
     }
 
     object OldValue {
@@ -69,12 +64,6 @@ object Config : PreferenceConfig, DBConfig {
         const val DEBUG_CHANNEL = 2
         const val CUSTOM_CHANNEL = 3
 
-        // root access mode
-        const val ROOT_ACCESS_DISABLED = 0
-        const val ROOT_ACCESS_APPS_ONLY = 1
-        const val ROOT_ACCESS_ADB_ONLY = 2
-        const val ROOT_ACCESS_APPS_AND_ADB = 3
-
         // su multiuser
         const val MULTIUSER_MODE_OWNER_ONLY = 0
         const val MULTIUSER_MODE_OWNER_MANAGED = 1
@@ -89,14 +78,6 @@ object Config : PreferenceConfig, DBConfig {
         const val NO_NOTIFICATION = 0
         const val NOTIFICATION_TOAST = 1
         const val NOTIFICATION_STATUS_BAR = 2
-
-        // su auto response
-        const val SU_PROMPT = 0
-        const val SU_AUTO_DENY = 1
-        const val SU_AUTO_ALLOW = 2
-
-        // su timeout
-        val TIMEOUT_LIST = longArrayOf(0, -1, 10, 20, 30, 60)
     }
 
     @JvmField var keepVerity = false
@@ -110,12 +91,17 @@ object Config : PreferenceConfig, DBConfig {
     var safetyNotice by preference(Key.SAFETY, true)
     var darkTheme by preference(Key.DARK_THEME, -1)
     var themeOrdinal by preference(Key.THEME_ORDINAL, 0)
-    var colorMode by preference(Key.COLOR_MODE, 0)
+    var colorMode by preference(Key.COLOR_MODE, ColorMode.MONET_SYSTEM.value)
 
     private var checkUpdatePrefs by preference(Key.CHECK_UPDATES, true)
     private var localePrefs by preference(Key.LOCALE, "")
     var doh by preference(Key.DOH, false)
     var updateChannel by preference(Key.RELEASE_CHANNEL, Value.DEFAULT_CHANNEL)
+    val updateChannelIndex get() = when (updateChannel) {
+        Value.DEFAULT_CHANNEL ->
+            if (BuildConfig.DEBUG) Value.DEBUG_CHANNEL else Value.STABLE_CHANNEL
+        else -> updateChannel
+    }
     var customChannelUrl by preference(Key.CUSTOM_CHANNEL, "")
     var downloadDir by preference(Key.DOWNLOAD_DIR, "")
     var randName by preference(Key.RAND_NAME, true)
@@ -137,11 +123,7 @@ object Config : PreferenceConfig, DBConfig {
     var zygisk by dbSettings(Key.ZYGISK, Info.isEmulator)
     var suManager by dbStrings(Key.SU_MANAGER, "", true)
     var keyStoreRaw by dbStrings(Key.KEYSTORE, "", true)
-
-    var suDefaultTimeout by preferenceStrInt(Key.SU_REQUEST_TIMEOUT, 10)
-    var suAutoResponse by preferenceStrInt(Key.SU_AUTO_RESPONSE, Value.SU_PROMPT)
     var suNotification by preferenceStrInt(Key.SU_NOTIFICATION, Value.NOTIFICATION_TOAST)
-    var rootMode by dbSettings(Key.ROOT_ACCESS, Value.ROOT_ACCESS_APPS_AND_ADB)
     var suMntNamespaceMode by dbSettings(Key.SU_MNT_NS, Value.NAMESPACE_MODE_REQUESTER)
     var suMultiuserMode by dbSettings(Key.SU_MULTIUSER_MODE, Value.MULTIUSER_MODE_OWNER_ONLY)
     private var suBiometric by dbSettings(Key.SU_BIOMETRIC, false)
@@ -150,8 +132,6 @@ object Config : PreferenceConfig, DBConfig {
         set(value) {
             suBiometric = value
         }
-    var suReAuth by preference(Key.SU_REAUTH, false)
-    var suTapjack by preference(Key.SU_TAPJACK, true)
     var suRestrict by preference(Key.SU_RESTRICT, false)
 
     private const val SU_FINGERPRINT = "su_fingerprint"

@@ -43,25 +43,23 @@
     <string name="install_inactive_slot">Instalar no slot inativo (após o OTA)</string>
     <string name="install_inactive_slot_msg">O seu dispositivo será FORÇADO a inicializar no slot inativo atual após um reinício!\nSó use esta opção após a conclusão do OTA.\nDeseja continuar?</string>
     <string name="setup_title">Configuração adicional</string>
-    <string name="select_patch_file">Selecione e corrija um ficheiro</string>
-    <string name="patch_file_msg">Selecione um ficheiro de imagem (*.img) ou um ficheiro tar (*.tar) ou um ficheiro payload.bin (*.bin)</string>
     <string name="reboot_delay_toast">A reiniciar em 5 segundos…</string>
     <string name="flash_screen_title">Instalação</string>
 
     <!--Superuser-->
-    <string name="su_request_title">Solicitação de SuperUsuário</string>
-    <string name="touch_filtered_warning">Como um app está a ocultar um pedido de SuperUsuário, o Magisk não consegue verificar a sua resposta.</string>
+
+
     <string name="deny">Negar</string>
-    <string name="prompt">Perguntar</string>
+
     <string name="restrict">Restringir</string>
     <string name="grant">Permitir</string>
-    <string name="su_warning">Permite o acesso total ao seu dispositivo.\nNão o permita se não tiver a certeza do que está a fazer!</string>
-    <string name="forever">Sempre</string>
-    <string name="once">Uma vez</string>
-    <string name="tenmin">10 mins</string>
-    <string name="twentymin">20 mins</string>
-    <string name="thirtymin">30 mins</string>
-    <string name="sixtymin">60 mins</string>
+
+
+
+
+
+
+
     <string name="su_allow_toast">%1$s foi permitido o acesso de SuperUsuário</string>
     <string name="su_deny_toast">%1$s foi negado o acesso de SuperUsuário</string>
     <string name="su_snack_grant">Os acessos de SuperUsuário de %1$s foram permitidos</string>
@@ -150,24 +148,11 @@
     <string name="settings_app_name_hint">Novo nome</string>
     <string name="settings_app_name_helper">O app do Magisk será reinstalado com este nome</string>
     <string name="settings_app_name_error">Formato inválido</string>
-    <string name="settings_su_app_adb">Apps e ADB</string>
-    <string name="settings_su_app">Apenas apps</string>
-    <string name="settings_su_adb">Apenas ADB</string>
-    <string name="settings_su_disable">Desativado</string>
-    <string name="settings_su_request_10">10 segundos</string>
-    <string name="settings_su_request_15">15 segundos</string>
-    <string name="settings_su_request_20">20 segundos</string>
-    <string name="settings_su_request_30">30 segundos</string>
-    <string name="settings_su_request_45">45 segundos</string>
-    <string name="settings_su_request_60">60 segundos</string>
-    <string name="superuser_access">Acesso de SuperUsuário</string>
-    <string name="auto_response">Resposta automática</string>
-    <string name="request_timeout">Tempo limite da solicitação</string>
+
+
     <string name="superuser_notification">Notificação de SuperUsuário</string>
-    <string name="settings_su_reauth_title">Reautenticar após atualização</string>
-    <string name="settings_su_reauth_summary">Solicite permissões de SuperUsuário novamente após atualizar os apps</string>
-    <string name="settings_su_tapjack_title">Proteção contra atividades sobrepostas</string>
-    <string name="settings_su_tapjack_summary">A caixa de diálogo do SuperUsuário não responderá à entrada enquanto estiver oculta por qualquer outra janela ou sobreposição</string>
+
+
     <string name="settings_su_auth_title">Autenticação de usuário</string>
     <string name="settings_su_auth_summary">Solicite autenticação de usuário durante pedidos de SuperUsuário</string>
     <string name="settings_su_auth_insecure">Nenhum método de autenticação está configurado no dispositivo</string>
@@ -212,9 +197,7 @@
     <string name="reboot">Reiniciar</string>
     <string name="close">Fechar</string>
     <string name="release_notes">Notas da atualização</string>
-    <string name="flashing">Flashando…</string>
-    <string name="running">A executar…</string>
-    <string name="done">Concluído!</string>
+    <string name="flashing">Flashando…</string>    <string name="done">Concluído!</string>
     <string name="done_action">Ação de execução de %1$s concluída</string>
     <string name="failure">Falhou!</string>
     <string name="hide_app_title">A ocultar o app do Magisk…</string>

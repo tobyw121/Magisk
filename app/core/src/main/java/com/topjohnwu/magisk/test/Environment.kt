@@ -33,14 +33,14 @@ import java.io.PrintStream
 
 @Keep
 @RunWith(AndroidJUnit4::class)
-class Environment : BaseTest {
+class Environment : TestCommon {
 
     companion object {
         @BeforeClass
         @JvmStatic
-        fun before() = BaseTest.prerequisite()
+        fun before() = TestCommon.prerequisite()
 
-        // Whether we're running with live setup (patches through live_setup.sh)
+        // Whether we're running with live setup (patches through avd_setup.sh)
         fun isLiveSetup(): Boolean {
             val liveMarker = ShellUtils.fastCmd("echo \$MAGISKTMP/.magisk/live")
             return RootUtils.fs.getFile(liveMarker).exists()
@@ -59,7 +59,7 @@ class Environment : BaseTest {
         }
 
         fun lsposed(): Boolean {
-            return Build.VERSION.SDK_INT in 27..34
+            return Build.VERSION.SDK_INT in 28..37 && Const.CPU_ABI != "x86"
         }
 
         fun shamiko(): Boolean {
