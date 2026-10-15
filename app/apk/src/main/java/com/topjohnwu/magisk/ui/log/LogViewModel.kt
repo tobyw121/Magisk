@@ -91,7 +91,11 @@ class LogViewModel(
 
                 file.write("\n---Magisk Logs---\n")
                 file.write("${Info.env.versionString} (${Info.env.versionCode})\n\n")
-                if (Info.env.isActive) file.write(magiskLogRaw)
+                if (Info.env.isActive) file.write(repo.fetchMagiskLogs())
+                else {
+                    file.write("\n---Recovery Installer Log---\n")
+                    file.write(repo.fetchRecoveryLogs())
+                }
 
                 file.write("\n---Manager Logs---\n")
                 file.write("${BuildConfig.APP_VERSION_NAME} (${BuildConfig.APP_VERSION_CODE})\n\n")

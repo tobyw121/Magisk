@@ -176,7 +176,7 @@ fun Project.setupCoreLib() {
                 inputs.property("versionCode", Config.versionCode)
                 from(rootFile("scripts")) {
                     include("util_functions.sh", "boot_patch.sh", "addon.d.sh",
-                        "app_functions.sh", "uninstaller.sh", "module_installer.sh")
+                        "app_functions.sh", "uninstaller.sh", "module_installer.sh", "recovery_log.sh")
                 }
                 from(stubTask) {
                     include { it.name.endsWith(".apk") }

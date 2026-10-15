@@ -18,6 +18,25 @@ app_diagnostics() {
   return 0
 }
 
+# Return the newest readable recovery transcript, independently of daemon state.
+app_recovery_logs() {
+  local file newest=
+  for file in /data/adb/magisk/recovery.log /cache/magisk-recovery.log \
+    /data/magisk/recovery.log /cache/data_adb/magisk/recovery.log; do
+    [ -r "$file" ] || continue
+    if [ -z "$newest" ] || [ "$file" -nt "$newest" ]; then
+      newest=$file
+    fi
+  done
+  if [ -n "$newest" ]; then
+    echo "Source: $newest"
+    cat "$newest"
+  else
+    echo "Recovery transcript unavailable: no readable persistent copy."
+    echo "Root access may be required. In recovery: adb pull /tmp/magisk-recovery.log"
+  fi
+}
+
 # $1 = delay
 # $2 = command
 run_delay() {

@@ -11,7 +11,9 @@ use nix::sys::stat::{Mode, SFlag, mknod};
 use num_traits::AsPrimitive;
 use std::cmp::Ordering::{Greater, Less};
 use std::ffi::OsStr;
-use std::path::{Path, PathBuf};
+use std::path::Path;
+
+mod denylist;
 
 // Linux allocated devices: 240-254 are reserved for LOCAL/EXPERIMENTAL use.
 const DYNAMIC_MAJOR_MIN: u32 = 240;
@@ -246,22 +248,17 @@ pub fn revert_unmount(pid: i32) {
         return;
     }
 
-    let mut prev: Option<PathBuf> = None;
-    targets.sort();
-    targets.retain(|target| {
-        if let Some(prev) = &prev
-            && Path::new(target).starts_with(prev)
-        {
-            return false;
-        }
-        prev = Some(PathBuf::from(target.clone()));
-        true
-    });
+    denylist::sort_unmount_targets(&mut targets);
 
     for mut target in targets {
         let target = Utf8CStr::from_string(&mut target);
-        if target.unmount().is_ok() {
-            debug!("denylist: Unmounted ({})", target);
+        match target.unmount() {
+            Ok(()) => {
+                debug!("denylist: Unmounted ({})", target);
+            }
+            Err(err) => {
+                warn!("denylist: Cannot unmount ({}): {}", target, err);
+            }
         }
     }
 }

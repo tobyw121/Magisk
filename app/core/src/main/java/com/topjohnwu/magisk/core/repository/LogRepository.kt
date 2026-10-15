@@ -33,7 +33,14 @@ class LogRepository(
         } else {
             Shell.cmd("logcat -d").to(list).await()
         }
-        return list.buf.toString()
+        return list.buf.toString() + "\n---Recovery Installer Log---\n" + fetchRecoveryLogs()
+    }
+
+    suspend fun fetchRecoveryLogs(): String {
+        val output = mutableListOf<String>()
+        val result = Shell.cmd("app_recovery_logs").to(output).await()
+        return if (result.isSuccess) output.joinToString("\n", postfix = "\n")
+        else "Recovery transcript could not be read; check root access.\n"
     }
 
     suspend fun clearLogs() = logDao.deleteAll()

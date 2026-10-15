@@ -22,6 +22,10 @@
 ###################
 
 ui_print() {
+  # Recovery UI writes bypass stdout; retain them in the complete transcript too.
+  if [ -n "$MAGISK_RECOVERY_LOG" ]; then
+    printf '%s\n' "$1" >> "$MAGISK_RECOVERY_LOG"
+  fi
   if $BOOTMODE; then
     echo "$1"
   else
@@ -74,6 +78,7 @@ is_mounted() {
 
 abort() {
   ui_print "$1"
+  [ -z "$INSTALL_STAGE" ] || ui_print "[DEBUG] Failure stage=$INSTALL_STAGE target=$BOOTIMAGE data=$DATA decrypted=$DATA_DE"
   $BOOTMODE || recovery_cleanup
   [ ! -z $MODPATH ] && rm -rf $MODPATH
   rm -rf $TMPDIR
@@ -345,10 +350,12 @@ get_flags() {
   fi
 
   # Overridable config flags with safe defaults
-  getvar KEEPVERITY
-  getvar KEEPFORCEENCRYPT
-  getvar RECOVERYMODE
-  getvar VENDORBOOT
+  if [ "${1:-}" != clean ]; then
+    getvar KEEPVERITY
+    getvar KEEPFORCEENCRYPT
+    getvar RECOVERYMODE
+    getvar VENDORBOOT
+  fi
   if [ -z $KEEPVERITY ]; then
     if $SYSTEM_AS_ROOT; then
       KEEPVERITY=true
@@ -490,14 +497,15 @@ flash_image() {
   return 0
 }
 
-# Common installation script for flash_script.sh and addon.d.sh
-install_magisk() {
-  cd $MAGISKBIN
-
-  # Source the boot patcher
+# Prepare and verify before a recovery clean install removes persistent data.
+prepare_magisk_image() {
+  cd "$MAGISKBIN" || abort "! Cannot access installation files"
   SOURCEDMODE=true
   . ./boot_patch.sh "$BOOTIMAGE"
+}
 
+flash_magisk_image() {
+  cd "$MAGISKBIN" || abort "! Cannot access installation files"
   ui_print "- Flashing new boot image"
   flash_image new-boot.img "$BOOTIMAGE"
   case $? in
@@ -516,7 +524,127 @@ install_magisk() {
   ./magiskboot cleanup
   rm -f new-boot.img
 
-  run_migrations
+  if [ "$RECOVERYINSTALL" = true ] && [ "$DATA" != true ]; then
+    ui_print "! /data unavailable: stock-backup migration skipped"
+  else
+    run_migrations
+  fi
+}
+
+# Common installation script for in-app, recovery and addon.d upgrades.
+install_magisk() {
+  prepare_magisk_image
+  flash_magisk_image
+}
+
+recovery_has_persistent_cache() {
+  awk '$2 == "/cache" && $3 != "tmpfs" && $3 != "rootfs" { found = 1 }
+    END { exit !found }' /proc/mounts
+}
+
+# Selected diagnostics only: never dump the process environment or key material.
+recovery_debug_state() {
+  ui_print "[DEBUG] bootmode=$BOOTMODE data=$DATA data_de=$DATA_DE clean=$CLEANINSTALL"
+  ui_print "[DEBUG] target=$BOOTIMAGE slot=$SLOT fallback=$MAGISKBIN"
+  ui_print "[DEBUG] crypto=$(getprop ro.crypto.state) device=$(getprop ro.product.device) sdk=$(getprop ro.build.version.sdk)"
+  ui_print "[DEBUG] keepverity=$KEEPVERITY forceencrypt=$KEEPFORCEENCRYPT recoverymode=$RECOVERYMODE legacy_sar=$LEGACYSAR"
+  uname -a
+  grep -E ' /(data|cache|metadata|persist|mnt/vendor/persist|system|system_root) ' /proc/mounts
+  df -k /data /cache 2>&1
+  [ -z "$BOOTIMAGE" ] || ls -l "$BOOTIMAGE" 2>&1
+  return 0
+}
+
+# Make known preinit storage visible before checking/removing its Magisk data.
+# Recovery fstab is authoritative; never guess filesystem types or format data.
+mount_recovery_magisk_storage() {
+  [ "$BOOTMODE" = false ] || return 1
+  local PARTITION MOUNTPOINT
+  for PARTITION in metadata persist; do
+    MOUNTPOINT=/$PARTITION
+    is_mounted "$MOUNTPOINT" && continue
+    if [ "$PARTITION" = persist ] && is_mounted /mnt/vendor/persist; then
+      continue
+    fi
+    [ -n "$(find_block "$PARTITION")" ] || continue
+    mount "$MOUNTPOINT" || {
+      ui_print "! Mount $MOUNTPOINT in recovery before a clean installation"
+      return 1
+    }
+  done
+}
+
+# Explicit Magisk-owned paths only. A filesystem root may be supplied by tests.
+# Never wipe /data/adb itself, app data, stock-image backups or generic init.
+recovery_magisk_paths() {
+  local ROOT="$1"
+  local PATHNAME
+  for PATHNAME in \
+    /data/adb/magisk /data/adb/modules /data/adb/modules_update \
+    /data/adb/magisk.db /data/adb/magisk.db-journal \
+    /data/adb/magisk.db-wal /data/adb/magisk.db-shm \
+    /data/adb/magisk.img /data/adb/magisk_merge.img \
+    /data/magisk.img /data/magisk_merge.img /cache/magisk.img \
+    /data/adb/post-fs-data.d /data/adb/service.d /data/adb/sepolicy.rule \
+    /data/magisk /cache/data_adb/magisk /data/.magisk /cache/.magisk \
+    /cache/magisk.log /cache/magisk.log.bak \
+    /data/unencrypted/magisk /metadata/magisk /metadata/watchdog/magisk \
+    /persist/magisk /mnt/vendor/persist/magisk; do
+    # Some recoveries expose persist through this canonical vendor alias.
+    if [ "$PATHNAME" = /persist/magisk ] && [ -L "$ROOT/persist" ] &&
+       [ "$(readlink -f "$ROOT/persist")" = "$ROOT/mnt/vendor/persist" ]; then
+      continue
+    fi
+    echo "$ROOT$PATHNAME"
+  done
+}
+
+# Preflight all paths before removing any, including mounts nested in modules.
+# rm must never traverse a live bind mount or a symlinked parent directory.
+check_recovery_magisk_cleanup() {
+  [ "$BOOTMODE" = false ] && [ "$DATA_DE" = true ] || return 1
+  local ROOT="$1"
+  local PATHNAME PARENT
+  [ -r "$ROOT/proc/mounts" ] || return 1
+  for PATHNAME in $(recovery_magisk_paths "$ROOT"); do
+    [ -e "$PATHNAME" ] || [ -L "$PATHNAME" ] || continue
+    PARENT=${PATHNAME%/*}
+    while [ "$PARENT" != "$ROOT" ] && [ -n "$PARENT" ]; do
+      if [ -L "$PARENT" ]; then
+        ui_print "! Refusing cleanup through symlink: $PARENT"
+        return 1
+      fi
+      PARENT=${PARENT%/*}
+    done
+    if awk -v path="$PATHNAME" '
+      $2 == path || index($2, path "/") == 1 { found = 1 }
+      END { exit !found }
+    ' "$ROOT/proc/mounts"; then
+      ui_print "! Unmount before clean installation: $PATHNAME"
+      return 1
+    fi
+    if [ -e "$PATHNAME" ] || [ -L "$PATHNAME" ]; then
+      [ -w "${PATHNAME%/*}" ] || {
+        ui_print "! Cleanup path is not writable: $PATHNAME"
+        return 1
+      }
+    fi
+  done
+}
+
+clean_recovery_magisk() {
+  local ROOT="$1"
+  check_recovery_magisk_cleanup "$ROOT" || return 1
+  ui_print "- Removing old Magisk modules, settings and startup scripts"
+  local PATHNAME
+  for PATHNAME in $(recovery_magisk_paths "$ROOT"); do
+    rm -rf -- "$PATHNAME" || return 1
+    if [ -e "$PATHNAME" ] || [ -L "$PATHNAME" ]; then
+      ui_print "! Unable to remove: $PATHNAME"
+      return 1
+    fi
+  done
+  ui_print "- Old Magisk data removed; root permissions and Zygisk settings reset"
 }
 
 remove_system_su() {
