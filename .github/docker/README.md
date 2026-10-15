@@ -21,8 +21,9 @@ artifact named after the commit SHA. It contains `app-release.apk`,
 `app-debug.apk`, `stub-release.apk`, `stub-debug.apk`, and `test.apk`.
 APKs are retained for 14 days. Mapping/debug outputs are uploaded separately;
 failed builds upload any available build logs. The test APK is compiled;
-building it does not execute its device tests. The existing host and emulator
-jobs remain in the workflow.
+building it does not execute its device tests. Magisk is built exclusively in
+the Linux Docker job; there are no Windows or standalone host-build jobs.
+The optional emulator tests also use Ubuntu Linux runners.
 
 No signing secrets, registry credentials, or release publishing permissions are
 required. Without a custom `config.prop` signing configuration, builds use the
