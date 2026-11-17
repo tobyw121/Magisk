@@ -141,8 +141,6 @@
     <string name="settings_update_custom">Khusus</string>
     <string name="settings_update_custom_msg">Masukkan URL saluran khusus</string>
     <string name="settings_zygisk_summary">Menjalankan sebagian komponen Magisk di daemon Zygote</string>
-    <string name="settings_denylist_title">Paksa DenyList</string>
-    <string name="settings_denylist_summary">Proses pada denylist akan mengembalikan semua modifikasi Magisk</string>
     <string name="settings_denylist_config_title">Konfigurasi DenyList</string>
     <string name="settings_denylist_config_summary">Pilih proses yang akan disertakan ke dalam denylist</string>
     <string name="settings_hosts_title">Hosts systemless</string>

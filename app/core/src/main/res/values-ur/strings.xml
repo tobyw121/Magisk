@@ -125,8 +125,6 @@
     <string name="settings_update_custom">کسٹم</string>
     <string name="settings_update_custom_msg">ایک کسٹم چینل URL درج کریں</string>
     <string name="settings_zygisk_summary">zygote ڈیمن میں Magisk کے کچھ حصے چلائیں</string>
-    <string name="settings_denylist_title">مسترد فہرست نافذ کریں</string>
-    <string name="settings_denylist_summary">مسترد فہرست میں موجود عملوں میں Magisk کی تمام ترامیم کو کالعدم قرار دیا جائے گا</string>
     <string name="settings_denylist_config_title">مسترد فہرست کی تشکیل کریں</string>
     <string name="settings_denylist_config_summary">مسترد فہرست میں شامل کرنے کے لیے عمل منتخب کریں</string>
     <string name="settings_hosts_title">سسٹم لیس ہوسٹس</string>

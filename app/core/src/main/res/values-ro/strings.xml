@@ -135,8 +135,6 @@
     <string name="settings_update_custom">Personalizat</string>
     <string name="settings_update_custom_msg">Inserează un URL pentru canal personalizat</string>
     <string name="settings_zygisk_summary">Rulează părți ale Magisk în daemonul zygote</string>
-    <string name="settings_denylist_title">Impune lista de refuzări</string>
-    <string name="settings_denylist_summary">Procesele din lista de refuzări vor avea toate modificările Magisk anulate</string>
     <string name="settings_denylist_config_title">Configurează lista de refuzări</string>
     <string name="settings_denylist_config_summary">Selectează procesele care vor fi incluse în lista de refuzări</string>
     <string name="settings_hosts_title">Fișier hosts în afara partiției system</string>

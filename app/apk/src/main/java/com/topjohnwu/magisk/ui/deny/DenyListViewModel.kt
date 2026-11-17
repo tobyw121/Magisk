@@ -5,9 +5,13 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.viewModelScope
 import com.topjohnwu.magisk.arch.AsyncLoadViewModel
 import com.topjohnwu.magisk.core.AppContext
+import com.topjohnwu.magisk.core.R as CoreR
 import com.topjohnwu.magisk.core.ktx.concurrentMap
+import com.topjohnwu.magisk.core.utils.DenyListStore
+import com.topjohnwu.magisk.core.utils.DenyListStore.Target
 import com.topjohnwu.magisk.ui.component.AppSortBy
 import com.topjohnwu.superuser.Shell
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,11 +19,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.toCollection
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 @Immutable
 data class DenyProcessState(
@@ -53,6 +61,24 @@ data class DenyAppState(
 }
 
 class DenyListViewModel : AsyncLoadViewModel() {
+
+    private val operations = DenyListStore.operations
+    private val _busy = MutableStateFlow(false)
+    val busy: StateFlow<Boolean> = _busy.asStateFlow()
+    private val store = DenyListStore { command ->
+        val result = Shell.cmd(command).exec()
+        DenyListStore.Reply(result.code, result.out, result.err)
+    }
+
+    private fun ProcessInfo.target() = Target(packageName, name)
+
+    private fun applySnapshot(entries: Set<Target>) {
+        _allApps.update { apps -> apps.map { app ->
+            app.copy(processes = app.processes.map { proc ->
+                proc.copy(isEnabled = DenyListStore.covers(entries, proc.process.target()))
+            })
+        } }
+    }
 
     private val _loading = MutableStateFlow(true)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
@@ -108,6 +134,14 @@ class DenyListViewModel : AsyncLoadViewModel() {
         filtered.sortedWith(comparator)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    init {
+        viewModelScope.launch {
+            com.topjohnwu.magisk.core.utils.DefaultDenyList.revisions.drop(1).collect {
+                if (_allApps.value.isNotEmpty()) startLoading()
+            }
+        }
+    }
+
     fun setQuery(q: String) { _query.value = q }
     fun setShowSystem(v: Boolean) {
         _showSystem.value = v
@@ -125,101 +159,87 @@ class DenyListViewModel : AsyncLoadViewModel() {
         }
     }
 
-    fun toggleAll(app: DenyAppState) {
-        val willCheck = !app.isChecked
-        if (!willCheck) {
-            Shell.cmd("magisk --denylist rm ${app.info.packageName}").submit()
-        }
-        _allApps.update { apps ->
-            apps.map { currentApp ->
-                if (currentApp.info.packageName == app.info.packageName) {
-                    val newProcs = currentApp.processes.map { proc ->
-                        if (willCheck) {
-                            if (!proc.isEnabled) {
-                                val (name, pkg) = proc.process
-                                Shell.cmd("magisk --denylist add $pkg '$name'").submit()
-                            }
-                            proc.copy(isEnabled = true)
-                        } else {
-                            if (proc.process.isIsolated && proc.isEnabled) {
-                                Shell.cmd(removeCommand(proc.process)).submit()
-                            }
-                            proc.copy(isEnabled = false)
+    fun toggleAll(app: DenyAppState) = change(app.info.packageName, null)
+
+    fun toggleProcess(app: DenyAppState, proc: DenyProcessState) =
+        change(app.info.packageName, proc.process.target())
+
+    private fun change(pkg: String, process: Target?) {
+        if (_busy.value || _loading.value) return
+        _busy.value = true
+        viewModelScope.launch {
+            try {
+                operations.withLock {
+                    withContext(Dispatchers.IO) {
+                        val current = _allApps.value.find { it.info.packageName == pkg }
+                            ?: return@withContext
+                        val entries = store.read()
+                        val targets = process?.let { setOf(it) }
+                            ?: current.processes.mapTo(linkedSetOf()) { it.process.target() }
+                        val enabled = !targets.all { DenyListStore.covers(entries, it) }
+                        val result = store.change(targets, enabled, if (process == null && !enabled) pkg else null)
+                        applySnapshot(result.entries)
+                        if (result.successful) com.topjohnwu.magisk.core.utils.DefaultDenyList.rememberChoice(pkg)
+                        if (!result.successful) {
+                            Timber.e("DenyList update was not applied: %s", result.diagnostics.joinToString("\n").take(2048))
+                            showToast(CoreR.string.denylist_update_unverified)
                         }
                     }
-                    currentApp.copy(processes = newProcs)
-                } else {
-                    currentApp
                 }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Cannot verify DenyList")
+                showToast(CoreR.string.denylist_update_unverified)
+            } finally {
+                _busy.value = false
             }
         }
-    }
-
-    fun toggleProcess(app: DenyAppState, proc: DenyProcessState) {
-        val newEnabled = !proc.isEnabled
-        val (name, pkg) = proc.process
-        val cmd = if (newEnabled) "magisk --denylist add $pkg '$name'" else removeCommand(proc.process)
-        Shell.cmd(cmd).submit()
-
-        _allApps.update { apps ->
-            apps.map { currentApp ->
-                if (currentApp.info.packageName == app.info.packageName) {
-                    val newProcs = currentApp.processes.map { currentProc ->
-                        if (currentProc.process.name == proc.process.name && currentProc.process.packageName == proc.process.packageName) {
-                            currentProc.copy(isEnabled = newEnabled)
-                        } else {
-                            currentProc
-                        }
-                    }
-                    currentApp.copy(processes = newProcs)
-                } else {
-                    currentApp
-                }
-            }
-        }
-    }
-
-    private fun removeCommand(proc: ProcessInfo): String {
-        if (!proc.isIsolated) return "magisk --denylist rm ${proc.packageName} '${proc.name}'"
-        // Isolated processes are matched by name prefix. Older versions of the app added one
-        // entry per isolated service (e.g. "com.foo:com.foo.Service") instead of the prefix
-        // itself, so remove every entry starting with the prefix.
-        return "magisk --denylist ls | while IFS='|' read -r pkg proc; do " +
-            "[ \"\$pkg\" = $ISOLATED_MAGIC ] && case \"\$proc\" in '${proc.name}'*) " +
-            "magisk --denylist rm $ISOLATED_MAGIC \"\$proc\";; esac; done"
     }
 
     override suspend fun doLoadWork() {
         // Scanning every app is slow and resets the list, so only do it once: this is called
         // again whenever the screen is recreated, e.g. on rotation
-        if (_allApps.value.isNotEmpty()) return
-        _loading.value = true
-        val apps = withContext(Dispatchers.Default) {
-            val pm = AppContext.packageManager
-            val denyList = Shell.cmd("magisk --denylist ls").exec().out
-                .map { CmdlineListItem(it) }
-            val apps = pm.getInstalledApplications(MATCH_UNINSTALLED_PACKAGES).run {
-                asFlow()
-                    .filter { AppContext.packageName != it.packageName }
-                    .concurrentMap { AppProcessInfo(it, pm, denyList) }
-                    .filter { it.processes.isNotEmpty() }
-                    .concurrentMap { DenyAppState(it) }
-                    .toCollection(ArrayList(size + 1))
+        operations.withLock {
+            try {
+                if (_allApps.value.isNotEmpty()) {
+                    applySnapshot(withContext(Dispatchers.IO) { store.read() })
+                    return@withLock
+                }
+                _loading.value = true
+                val apps = withContext(Dispatchers.IO) {
+                    val pm = AppContext.packageManager
+                    val denyList = store.read().map { CmdlineListItem("${it.pkg}|${it.process}") }
+                    val apps = pm.getInstalledApplications(MATCH_UNINSTALLED_PACKAGES).run {
+                        asFlow()
+                            .filter { AppContext.packageName != it.packageName }
+                            .concurrentMap { AppProcessInfo(it, pm, denyList) }
+                            .filter { it.processes.isNotEmpty() }
+                            .concurrentMap { DenyAppState(it) }
+                            .toCollection(ArrayList(size + 1))
+                    }
+                    apps += DenyAppState(
+                        AppProcessInfo.webViewZygote(
+                            pm,
+                            denyList,
+                            "WebView Zygote",
+                        )
+                    )
+                    apps.sortWith(compareBy(
+                        { !it.initiallyChecked },
+                        { it.info }
+                    ))
+                    apps
+                }
+                _allApps.value = apps
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Cannot load DenyList")
+                showToast(CoreR.string.denylist_update_unverified)
+            } finally {
+                _loading.value = false
             }
-            apps += DenyAppState(
-                AppProcessInfo.webViewZygote(
-                    pm,
-                    denyList,
-                    "WebView Zygote",
-                )
-            )
-            apps.sortWith(compareBy(
-                { !it.initiallyChecked },
-                { it.info }
-            ))
-            apps
         }
-        _allApps.value = apps
-        _loading.value = false
     }
 }

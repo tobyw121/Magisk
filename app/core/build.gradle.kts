@@ -43,6 +43,8 @@ dependencies {
     api(libs.markwon.core)
     implementation(libs.commons.compress)
     implementation(libs.xz)
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.86")
+    testImplementation("junit:junit:4.13.2")
     implementation(libs.wire.runtime)
 
     api(libs.libsu.core)
@@ -72,4 +74,13 @@ dependencies {
     // That's why we make it compileOnly.
     compileOnly(libs.test.junit)
     compileOnly(libs.test.uiautomator)
+}
+
+// Re-run the integration test when the APK supplied by CI changes.
+tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+    val apk = System.getenv("MAGISK_REPACK_INPUT")
+    inputs.property("identityRepackInput", apk.orEmpty())
+    if (!apk.isNullOrEmpty()) {
+        inputs.file(apk).withPropertyName("identityRepackApk")
+    }
 }

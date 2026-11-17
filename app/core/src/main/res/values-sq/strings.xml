@@ -140,8 +140,6 @@
     <string name="settings_update_custom">I personalizuar</string>
     <string name="settings_update_custom_msg">Vendosni një URL kanali të personalizuar</string>
     <string name="settings_zygisk_summary">Ekzekuto pjesë të Magisk në daemon-in Zygote</string>
-    <string name="settings_denylist_title">Detyro DenyList</string>
-    <string name="settings_denylist_summary">Proceset në listën e mohimit do të kenë të gjitha modifikimet e Magisk të anuluara</string>
     <string name="settings_denylist_config_title">Konfiguro DenyList</string>
     <string name="settings_denylist_config_summary">Zgjidhni proceset që do të përfshihen në listën e mohimit</string>
     <string name="settings_hosts_title">Hosts pa sistem (Systemless)</string>

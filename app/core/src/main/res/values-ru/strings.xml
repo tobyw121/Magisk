@@ -134,8 +134,6 @@
     <string name="settings_update_custom">Сторонний канал</string>
     <string name="settings_update_custom_msg">Укажите ссылку</string>
     <string name="settings_zygisk_summary">Запускать компоненты Magisk в zygote процессе</string>
-    <string name="settings_denylist_title">Активировать DenyList</string>
-    <string name="settings_denylist_summary">Все изменения, внесённые Magisk-ом, будут скрыты от процессов, отмеченных в DenyList</string>
     <string name="settings_denylist_config_title">Настройка DenyList</string>
     <string name="settings_denylist_config_summary">Отметьте процессы для скрытия в DenyList</string>
     <string name="settings_hosts_title">Внесистемный hosts файл</string>

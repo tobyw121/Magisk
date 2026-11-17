@@ -134,6 +134,10 @@ class HomeViewModel(
     }
 
     fun onManagerPressed() {
+        if (com.topjohnwu.magisk.core.tasks.AppIdentity.isHidden(AppContext)) {
+            showToast(CoreR.string.identity_restore_update)
+            return
+        }
         when (_uiState.value.appState) {
             State.LOADING -> showToast(CoreR.string.loading)
             State.INVALID -> showToast(CoreR.string.no_connection)

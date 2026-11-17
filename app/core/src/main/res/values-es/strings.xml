@@ -132,8 +132,6 @@
     <string name="settings_update_custom">Personalizado</string>
     <string name="settings_update_custom_msg">Ingresa la URL del canal personalizado</string>
     <string name="settings_zygisk_summary">Ejecuta Magisk en el proceso Zygote de Android</string>
-    <string name="settings_denylist_title">Aplicar lista de denegación</string>
-    <string name="settings_denylist_summary">Las apps en la lista de denegación no serán modificadas por Magisk</string>
     <string name="settings_denylist_config_title">Configurar lista de denegación</string>
     <string name="settings_denylist_config_summary">Selecciona los procesos de cada app que se incluirán en la lista</string>
     <string name="settings_hosts_title">Systemless hosts</string>

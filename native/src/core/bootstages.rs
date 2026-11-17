@@ -1,4 +1,4 @@
-use crate::consts::{APP_DATA_DIR, APP_PACKAGE_NAME, BBPATH, DATABIN, MODULEROOT, SECURE_DIR};
+use crate::consts::{APP_DATA_DIR, BBPATH, DATABIN, MODULEROOT, SECURE_DIR};
 use crate::daemon::MagiskD;
 use crate::db::MultiuserMode;
 use crate::ffi::{
@@ -39,7 +39,7 @@ impl MagiskD {
             buf.clear();
             buf.append_path(APP_DATA_DIR)
                 .append_path_fmt(user)
-                .append_path(APP_PACKAGE_NAME)
+                .append_path(self.manager_package(user))
                 .append_path("install");
             if buf.exists() {
                 break;
@@ -47,11 +47,7 @@ impl MagiskD {
         }
 
         // Alternative binaries paths
-        let alt_bin_dirs = [
-            cstr!("/cache/data_adb/magisk"),
-            cstr!("/data/magisk"),
-            &buf,
-        ];
+        let alt_bin_dirs = [cstr!("/cache/data_adb/magisk"), cstr!("/data/magisk"), &buf];
         for dir in alt_bin_dirs {
             if dir.exists() {
                 cstr!(DATABIN).remove_all().ok();

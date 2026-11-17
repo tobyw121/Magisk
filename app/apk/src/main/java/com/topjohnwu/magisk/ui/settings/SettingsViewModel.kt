@@ -11,17 +11,22 @@ import com.topjohnwu.magisk.core.Info
 import com.topjohnwu.magisk.core.R as CoreR
 import com.topjohnwu.magisk.core.ktx.toast
 import com.topjohnwu.magisk.core.model.ColorMode
+import com.topjohnwu.magisk.core.tasks.AppIdentity
 import com.topjohnwu.magisk.core.utils.LocaleSetting
 import com.topjohnwu.magisk.core.utils.MediaStoreUtils
 import com.topjohnwu.magisk.core.utils.RootUtils
 import com.topjohnwu.magisk.ui.ThemeState
 import com.topjohnwu.magisk.ui.navigation.Route
 import com.topjohnwu.superuser.Shell
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 class SettingsViewModel : BaseViewModel() {
 
@@ -168,6 +173,35 @@ class SettingsViewModel : BaseViewModel() {
         _uiState.update { it.copy(randomPackageNameEnabled = enabled) }
     }
 
+    fun openAppIdentityDialog() {
+        if (!_uiState.value.identityBusy && Const.USER_ID == 0) {
+            _uiState.update { it.copy(activeDialog = SettingsDialog.AppIdentity) }
+        }
+    }
+
+    fun changeAppIdentity() {
+        if (_uiState.value.identityBusy || Const.USER_ID != 0) return
+        _uiState.update { it.copy(identityBusy = true, activeDialog = null) }
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    if (AppIdentity.isHidden(AppContext)) {
+                        AppIdentity.restore(AppContext)
+                    } else {
+                        AppIdentity.hide(AppContext)
+                    }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "App identity change failed")
+                showToast(CoreR.string.identity_failure)
+            } finally {
+                _uiState.update { it.copy(identityBusy = false) }
+            }
+        }
+    }
+
     fun createHosts() {
         viewModelScope.launch {
             RootUtils.addSystemlessHosts()
@@ -190,13 +224,17 @@ class SettingsViewModel : BaseViewModel() {
     }
 
     fun toggleDenyList(enabled: Boolean) {
-        _uiState.update { it.copy(denyListEnabled = enabled) }
+        if (_uiState.value.denyListBusy) return
+        _uiState.update { it.copy(denyListBusy = true) }
         val cmd = if (enabled) "enable" else "disable"
         Shell.cmd("magisk --denylist $cmd").submit { result ->
             if (result.isSuccess) {
                 Config.denyList = enabled
+                _uiState.update { it.copy(denyListEnabled = enabled, denyListBusy = false) }
             } else {
-                _uiState.update { it.copy(denyListEnabled = !enabled) }
+                _uiState.update { it.copy(denyListBusy = false) }
+                Timber.e("DenyList update failed: %s", result.err.joinToString("\n"))
+                showToast(CoreR.string.root_isolation_failure)
             }
         }
     }

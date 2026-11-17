@@ -133,8 +133,6 @@
     <string name="settings_update_custom">Özəl</string>
     <string name="settings_update_custom_msg">Özəl kanal URL\'si daxil et</string>
     <string name="settings_zygisk_summary">Magiskin bəzi hissələrini zygote daemonda aç</string>
-    <string name="settings_denylist_title">İstisnaları Məcbur İşlət</string>
-    <string name="settings_denylist_summary">İstisnalar siyahısındakı proseslər Magisk əlavələrini tərsinə çevirəcək</string>
     <string name="settings_denylist_config_title">İstisnaları Ayarla</string>
     <string name="settings_denylist_config_summary">İstisnalara yerləşdiriləcək prosesi seçin</string>
     <string name="settings_hosts_title">Sistemsiz hostlar</string>

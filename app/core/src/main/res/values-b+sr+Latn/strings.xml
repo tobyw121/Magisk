@@ -145,8 +145,6 @@
     <string name="settings_update_custom">Prilagođeno</string>
     <string name="settings_update_custom_msg">Unesi prilagođeni URL kanala</string>
     <string name="settings_zygisk_summary">Pokreni delove Magisk-a u Zygote daemon-u</string>
-    <string name="settings_denylist_title">Sprovedi listu zabrana</string>
-    <string name="settings_denylist_summary">Procesi na listi zabrana će povratiti sve Magisk izmene</string>
     <string name="settings_denylist_config_title">Konfiguriši listu zabrana</string>
     <string name="settings_denylist_config_summary">Izaberi procese koji će biti na listi zabrana</string>
     <string name="settings_hosts_title">Bezsistemski domaćini (hosts)</string>

@@ -131,8 +131,6 @@
     <string name="settings_update_custom">Tinkintas</string>
     <string name="settings_update_custom_msg">Įdėkite tinkinto kanalo URL</string>
     <string name="settings_zygisk_summary">Vykdyti Magisk dalis zygote tarnyboje</string>
-    <string name="settings_denylist_title">Aktyvinti DenyList</string>
-    <string name="settings_denylist_summary">Visos procesų, esančių denylist, Magisk modifikacijos bus atkurtos</string>
     <string name="settings_denylist_config_title">Konfigūruoti DenyList</string>
     <string name="settings_denylist_config_summary">Pasirinkite procesus, kuriuos norite įtraukti į denylist</string>
     <string name="settings_hosts_title">Basisteminis hosts</string>

@@ -7,15 +7,25 @@ on:
       - "app/**"
       - "native/**"
       - "build.py"
+      - "scripts/**"
+      - ".github/actions/**"
+      - ".github/ci.prop"
       - ".github/workflows/build.yml"
   pull_request:
     branches: [master]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: magisk-build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build Magisk artifacts
-    runs-on: macos-26
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
     steps:
@@ -32,17 +42,37 @@ jobs:
       - name: Build release
         run: ./build.py -vr all
 
+      - name: Test APK install staging
+        run: python -B -m unittest discover -s scripts/tests -p test_app_install.py
+
+      - name: Test manager identity validation
+        run: |
+          scripts/env.py rustc --edition 2024 --test native/src/core/package/identity.rs -o "$RUNNER_TEMP/manager-identity-tests"
+          "$RUNNER_TEMP/manager-identity-tests"
+
+      - name: Check app tests and lint
+        env:
+          MAGISK_REPACK_INPUT: ${{ github.workspace }}/out/app-release.apk
+          MAGISK_REPACK_OUTPUT: ${{ runner.temp }}/hidden-manager-test.apk
+        working-directory: app
+        run: ../scripts/env.py ./gradlew :core:testDebugUnitTest :apk:lintRelease
+
+      - name: Verify hidden APK signature
+        run: scripts/env.py "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --min-sdk-version 24 "$RUNNER_TEMP/hidden-manager-test.apk"
+
       - name: Build debug
         run: ./build.py -v all
 
       - name: Stop gradle daemon
-        run: ./app/gradlew --stop
+        if: always()
+        run: scripts/env.py ./app/gradlew --stop
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v7
         with:
           name: ${{ github.sha }}
-          path: out
+          path: out/*.apk
+          if-no-files-found: error
           compression-level: 9
 
       - name: Upload mapping and native debug symbols
@@ -53,12 +83,8 @@ jobs:
           compression-level: 9
 
   test-build:
-    name: Test building on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-2025, ubuntu-24.04]
+    name: Test building on Ubuntu 24.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out
         uses: actions/checkout@v6
@@ -72,7 +98,8 @@ jobs:
         run: python build.py -v -c .github/ci.prop all
 
       - name: Stop gradle daemon
-        run: ./app/gradlew --stop
+        if: always()
+        run: scripts/env.py ./app/gradlew --stop
 
   avd-test:
     name: Test API ${{ matrix.version }} (x86_64)
@@ -149,48 +176,3 @@ jobs:
           path: |
             kernel.log
             logcat.log
-
-  cf-test:
-    name: Test ${{ matrix.device }}
-    runs-on: ubuntu-24.04
-    needs: build
-    if: false
-    env:
-      CF_HOME: /home/runner/aosp_cf_phone
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - branch: "aosp-android-latest-release"
-            device: "aosp_cf_x86_64_only_phone"
-
-    steps:
-      - name: Check out
-        uses: actions/checkout@v6
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v8
-        with:
-          name: ${{ github.sha }}
-          path: out
-
-      - name: Enable KVM group perms
-        run: .github/kvm.sh
-
-      - name: Setup Cuttlefish environment
-        run: |
-          scripts/cuttlefish.sh setup
-          scripts/cuttlefish.sh download ${{ matrix.branch }} ${{ matrix.device }}
-
-      - name: Run Cuttlefish test
-        timeout-minutes: 18
-        run: sudo -E -u $USER scripts/cuttlefish.sh test
-
-      - name: Upload logs on error
-        if: ${{ failure() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: "cvd-logs-${{ matrix.device }}"
-          path: |
-            /home/runner/aosp_cf_phone/cuttlefish/instances/cvd-1/logs
-            /home/runner/aosp_cf_phone/cuttlefish/instances/cvd-1/cuttlefish_config.json

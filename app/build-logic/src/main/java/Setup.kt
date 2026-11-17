@@ -68,6 +68,7 @@ fun Project.setupCommon() {
                     "/META-INF/versions/**",
                     "/META-INF/native-image/**",
                     "/org/apache/commons/**",
+                    "/org/bouncycastle/**",
                     "/kotlin/**",
                     "/*.txt",
                     "/*.json",

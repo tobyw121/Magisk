@@ -51,6 +51,9 @@ class SplashController<T>(private val activity: T)
     }
 
     fun onResume() {
+        if (splashShown) Shell.EXECUTOR.execute {
+            com.topjohnwu.magisk.core.utils.DefaultDenyList.initialize(activity)
+        }
         if (shouldCreateUiOnResume) {
             doCreateUi(null)
         }
@@ -63,6 +66,8 @@ class SplashController<T>(private val activity: T)
 
     private fun T.initializeApp() {
         Config.init()
+        runCatching { com.topjohnwu.magisk.core.tasks.AppIdentity.finishMigration(this) }
+            .onFailure { timber.log.Timber.e(it, "App identity migration failed") }
 
         Notifications.setup()
         JobService.schedule(this)
@@ -73,5 +78,6 @@ class SplashController<T>(private val activity: T)
 
         // Wait for root service
         RootUtils.Connection.await()
+        com.topjohnwu.magisk.core.utils.DefaultDenyList.initialize(this)
     }
 }

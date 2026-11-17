@@ -35,6 +35,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
+import com.topjohnwu.magisk.core.Const
+import com.topjohnwu.magisk.core.R as CoreR
+import com.topjohnwu.magisk.core.tasks.AppIdentity
 import com.topjohnwu.magisk.core.utils.LocaleSetting
 import com.topjohnwu.magisk.core.utils.MediaStoreUtils
 import com.topjohnwu.magisk.ui.component.AdaptiveColumns
@@ -47,7 +50,6 @@ import com.topjohnwu.magisk.ui.component.onlyHorizontal
 import com.topjohnwu.magisk.ui.component.rememberBiometricAuth
 import com.topjohnwu.magisk.ui.component.rememberNotificationPermissionLauncher
 import com.topjohnwu.magisk.ui.component.verticalScrollbar
-import com.topjohnwu.magisk.core.R as CoreR
 
 @Composable
 fun SettingsScreen(
@@ -83,6 +85,8 @@ fun SettingsScreen(
         onSaveDownloadPath = viewModel::saveDownloadPath,
         onToggleRandomPackageName = viewModel::setRandomPackageName,
         onCreateHosts = viewModel::createHosts,
+        onOpenAppIdentity = viewModel::openAppIdentityDialog,
+        onChangeAppIdentity = viewModel::changeAppIdentity,
         onToggleZygisk = viewModel::toggleZygisk,
         onToggleDenyList = viewModel::toggleDenyList,
         // Drop taps while a screen transition runs, so a quick second tap can't push again
@@ -117,6 +121,7 @@ fun SettingsContent(
     onSaveDownloadPath: (String) -> Unit,
     onToggleRandomPackageName: (Boolean) -> Unit,
     onCreateHosts: () -> Unit,
+    onOpenAppIdentity: () -> Unit,
     onToggleZygisk: (Boolean) -> Unit,
     onToggleDenyList: (Boolean) -> Unit,
     onNavigateToDenyList: () -> Unit,
@@ -125,6 +130,7 @@ fun SettingsContent(
     onNamespaceModeSelected: (Int) -> Unit,
     onNotificationModeSelected: (Int) -> Unit,
     onToggleSuRestrict: (Boolean) -> Unit,
+    onChangeAppIdentity: () -> Unit,
     onDismissDialog: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -206,6 +212,7 @@ fun SettingsContent(
                         MagiskSection(
                             uiState = uiState,
                             onCreateHosts = onCreateHosts,
+                            onOpenAppIdentity = onOpenAppIdentity,
                             onToggleZygisk = onToggleZygisk,
                             onToggleDenyList = onToggleDenyList,
                             onNavigateToDenyList = onNavigateToDenyList,
@@ -242,6 +249,16 @@ fun SettingsContent(
                 onConfirm = onSaveDownloadPath,
                 onDismiss = onDismissDialog,
             )
+        }
+        SettingsDialog.AppIdentity -> MagiskDialog(
+            onDismissRequest = onDismissDialog,
+            title = stringResource(if (AppIdentity.isHidden(LocalContext.current)) CoreR.string.identity_restore else CoreR.string.identity_title),
+            confirmText = stringResource(android.R.string.ok),
+            onConfirm = onChangeAppIdentity,
+            dismissText = stringResource(android.R.string.cancel),
+            onDismiss = onDismissDialog,
+        ) {
+            Text(stringResource(CoreR.string.identity_confirmation))
         }
         null -> Unit
     }
@@ -395,6 +412,7 @@ private fun AppSettingsSection(
 private fun MagiskSection(
     uiState: SettingsUiState,
     onCreateHosts: () -> Unit,
+    onOpenAppIdentity: () -> Unit,
     onToggleZygisk: (Boolean) -> Unit,
     onToggleDenyList: (Boolean) -> Unit,
     onNavigateToDenyList: () -> Unit,
@@ -406,6 +424,14 @@ private fun MagiskSection(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
     ) {
+        if (Const.USER_ID == 0) {
+            val hidden = AppIdentity.isHidden(LocalContext.current)
+            SettingsArrow(
+                title = stringResource(if (hidden) CoreR.string.identity_restore else CoreR.string.identity_title),
+                summary = stringResource(if (uiState.identityBusy) CoreR.string.loading else CoreR.string.identity_summary),
+                onClick = onOpenAppIdentity,
+            )
+        }
         // Systemless Hosts
         SettingsArrow(
             title = stringResource(CoreR.string.settings_hosts_title),
@@ -437,9 +463,10 @@ private fun MagiskSection(
 
             // DenyList
             SettingsSwitch(
-                title = stringResource(CoreR.string.settings_denylist_title),
-                summary = stringResource(CoreR.string.settings_denylist_summary),
+                title = stringResource(CoreR.string.root_isolation_title),
+                summary = stringResource(CoreR.string.root_isolation_summary),
                 checked = uiState.denyListEnabled,
+                enabled = !uiState.denyListBusy,
                 onCheckedChange = onToggleDenyList
             )
 

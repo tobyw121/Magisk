@@ -129,8 +129,6 @@
     <string name="settings_update_custom">Kênh tùy chỉnh</string>
     <string name="settings_update_custom_msg">Chèn một URL tùy chỉnh</string>
     <string name="settings_zygisk_summary">Khởi chạy các thành phần của Magisk trong tiến trình nền zygote</string>
-    <string name="settings_denylist_title">Thực thi danh sách loại trừ</string>
-    <string name="settings_denylist_summary">Mọi sửa đổi do Magisk thực hiện sẽ bị loại khỏi các quy trình trong danh sách loại trừ</string>
     <string name="settings_denylist_config_title">Cấu hình DenyList</string>
     <string name="settings_denylist_config_summary">Chọn các quy trình được đưa vào DenyList</string>
     <string name="settings_hosts_title">Systemless hosts</string>

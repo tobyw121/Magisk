@@ -129,8 +129,6 @@
     <string name="settings_update_custom">കസ്റ്റം</string>
     <string name="settings_update_custom_msg">കസ്റ്റം ചാനലിന്റെ URL ചേർക്കുക</string>
     <string name="settings_zygisk_summary">സൈഗോട്ട് ഡെമണിൽ മജിസ്കിന്റെ ഭാഗങ്ങൾ പ്രവർത്തിപ്പിക്കുക</string>
-    <string name="settings_denylist_title">നിഷിദ്ധ പട്ടിക പ്രാബല്യത്തിലാകുക</string>
-    <string name="settings_denylist_summary">നിഷിദ്ധ പട്ടികയിലെ പ്രോസസ്സുകൾക്കായി എല്ലാ മജിസ്‌ക് പരിഷ്‌ക്കരണങ്ങളും പഴയപടിയാക്കും</string>
     <string name="settings_denylist_config_title">നിഷിദ്ധ പട്ടിക കോൺഫിഗർ ചെയ്യുക</string>
     <string name="settings_denylist_config_summary">നിഷിദ്ധ പട്ടികയിൽ ഉൾപ്പെടുത്തേണ്ട പ്രോസസ്സുകൾ തിരഞ്ഞെടുക്കുക</string>
     <string name="settings_hosts_title">സിസ്റ്റംലെസ്സ് ഹോസ്റ്റ്</string>

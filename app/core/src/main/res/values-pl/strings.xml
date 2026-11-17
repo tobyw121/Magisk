@@ -134,8 +134,6 @@
     <string name="settings_update_custom">Własny kanał</string>
     <string name="settings_update_custom_msg">Wprowadź adres URL własnego kanału</string>
     <string name="settings_zygisk_summary">Uruchom część Magisk w demonie zygote</string>
-    <string name="settings_denylist_title">Egzekwowanie listy odmów (DenyList)</string>
-    <string name="settings_denylist_summary">Procesy znajdujące się na liście odmów (DenyList) będą miały cofnięte wszystkie modyfikacje Magisk</string>
     <string name="settings_denylist_config_title">Konfiguracja listy odmów (DenyList)</string>
     <string name="settings_denylist_config_summary">Wybierz procesy, które mają się znajdować na liście odmów (DenyList)</string>
     <string name="settings_hosts_title">Hosty Systemless</string>

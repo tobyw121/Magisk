@@ -134,8 +134,6 @@
     <string name="settings_update_custom">Personalizado</string>
     <string name="settings_update_custom_msg">Introduza um URL de canal personalizado</string>
     <string name="settings_zygisk_summary">Executa partes do Magisk no Zygote</string>
-    <string name="settings_denylist_title">Aplicar lista de negação</string>
-    <string name="settings_denylist_summary">Os processos na lista de negação terão todas as modificações do Magisk revertidas</string>
     <string name="settings_denylist_config_title">Configurar lista de negação</string>
     <string name="settings_denylist_config_summary">Selecione os processos a serem incluídos na lista de negação</string>
     <string name="settings_hosts_title">Hosts sem sistema</string>

@@ -57,6 +57,7 @@ struct Cli {
 #[argh(subcommand)]
 enum MagiskAction {
     LocalVersion(LocalVersion),
+    AppHiding(AppHiding),
     Version(Version),
     VersionCode(VersionCode),
     List(ListApplets),
@@ -77,6 +78,10 @@ enum MagiskAction {
     DenyList(DenyList),
     PreInitDevice(PreInitDevice),
 }
+
+#[derive(FromArgs)]
+#[argh(subcommand, name = "--supports-app-hiding")]
+struct AppHiding {}
 
 #[derive(FromArgs)]
 #[argh(subcommand, name = "-c")]
@@ -184,6 +189,7 @@ impl MagiskAction {
     fn exec(self) -> LoggedResult<i32> {
         use MagiskAction::*;
         match self {
+            AppHiding(_) => println!("manager-identity-v1"),
             LocalVersion(_) => {
                 #[cfg(debug_assertions)]
                 println!("{MAGISK_VERSION}:MAGISK:D ({MAGISK_VER_CODE})");

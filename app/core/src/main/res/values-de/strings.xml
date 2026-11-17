@@ -134,8 +134,6 @@
     <string name="settings_update_custom">Benutzerdefiniert</string>
     <string name="settings_update_custom_msg">Benutzerdefinierte URL einfügen</string>
     <string name="settings_zygisk_summary">Teile von Magisk im Zygoten-Daemon ausführen</string>
-    <string name="settings_denylist_title">Ausnahmeliste erzwingen</string>
-    <string name="settings_denylist_summary">Bei Prozessen, die auf der Ausnahmeliste stehen, werden alle Magisk-Änderungen rückgängig gemacht.</string>
     <string name="settings_denylist_config_title">Ausnahmeliste konfigurieren</string>
     <string name="settings_denylist_config_summary">Auswahl der Prozesse, die in die Ausnahmeliste aufgenommen werden sollen</string>
     <string name="settings_hosts_title">Systemlose Hosts-Datei</string>
@@ -209,4 +207,17 @@
     <string name="post_notifications_denied">Benachrichtigungen die Berechtigung erteilen, diese Funktion zu aktivieren</string>
     <string name="app_not_found">Keine App gefunden, die diese Aktion verarbeitet</string>
     <string name="reboot_apply_change">Neustart zum Änderungen übernehmen</string>
+
+    <string name="identity_title">Magisk-App verbergen (experimentell)</string>
+    <string name="identity_restore">Magisk-App wiederherstellen</string>
+    <string name="identity_summary">Zufälliger App-, Paket- und Standardprozessname. DenyList separat für ausgewählte Apps konfigurieren.</string>
+    <string name="identity_confirmation">Installiert eine neu signierte Kopie mit zufälligem Namen oder stellt die ursprüngliche App wieder her. Das Original wird erst entfernt, wenn die verborgene App Root erhält. App-Einstellungen werden nicht übertragen. Zuerst diese Magisk-Version ins Boot-Image installieren und neu starten. Vor Updates die ursprüngliche App wiederherstellen. Garantiert weder unsichtbares Root noch Play Integrity.</string>
+    <string name="identity_failure">App-Verbergen fehlgeschlagen. Magisk-Log prüfen, passendes Boot-Image installieren und neu starten.</string>
+    <string name="identity_restore_update">Vor dem Update die Magisk-App in den Einstellungen wiederherstellen.</string>
+    <string name="root_isolation_title">Root-Abschirmung (DenyList)</string>
+    <string name="root_isolation_summary">Magisk-Mounts aus ausgewählten App-Prozessen entfernen. Zygisk aktivieren, neu starten und die DenyList konfigurieren.</string>
+    <string name="root_isolation_failure">DenyList konnte nicht geändert werden. Root-Zugriff und Magisk-Log prüfen.</string>
+    <string name="denylist_update_unverified">Die DenyList-Änderung konnte nicht bestätigt werden. Die Auswahl zeigt den zuletzt erfolgreich gelesenen Stand. Root-Zugriff prüfen und diese Ansicht erneut öffnen.</string>
+    <string name="denylist_defaults_applied">Apps wurden standardmäßig in die DenyList aufgenommen. Zygisk prüfen und bei Bedarf neu starten. Einzelne Apps lassen sich in den Einstellungen entfernen.</string>
+    <string name="denylist_defaults_failed">Die DenyList-Ersteinrichtung ist unvollständig. Root-Zugriff und App-Log prüfen. Beim nächsten App-Start wird sie fortgesetzt.</string>
 </resources>

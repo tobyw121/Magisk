@@ -120,13 +120,19 @@ EOF
 # $1 = APK
 # $2 = package name
 adb_pm_install() {
-  local tmp=/data/local/tmp/temp.apk
-  cp -f "$1" $tmp
-  chmod 644 $tmp
+  local tmpdir tmp
+  tmpdir=$(mktemp -d /data/local/tmp/magisk-install.XXXXXX) || return 1
+  tmp=$tmpdir/base.apk
+  if ! cp -f "$1" "$tmp" || ! chmod 644 "$tmp" || ! chmod 755 "$tmpdir"; then
+    rm -f "$tmp"
+    rmdir "$tmpdir"
+    return 1
+  fi
   local cmd="pm install --user current -g $tmp"
   su 2000 -c $cmd || $cmd || su 1000 -c $cmd
   local res=$?
-  rm -f $tmp
+  rm -f "$tmp"
+  rmdir "$tmpdir"
   if [ $res = 0 ]; then
     appops set --user current "$2" REQUEST_INSTALL_PACKAGES allow
   fi
@@ -372,3 +378,17 @@ app_init() {
 }
 
 export BOOTMODE=true
+
+# Test the running daemon inode so an app-only update cannot enable migration.
+app_supports_identity() {
+  [ "$(id -u)" = 0 ] || return 1
+  local pid probe result
+  pid=$(pidof magiskd)
+  case "$pid" in ''|*[!0-9]*) return 1 ;; esac
+  probe=$(mktemp -d /data/adb/.identity-check.XXXXXX) || return 1
+  ln -s "/proc/$pid/exe" "$probe/magisk" || { rmdir "$probe"; return 1; }
+  result=$("$probe/magisk" --supports-app-hiding)
+  rm -f "$probe/magisk"
+  rmdir "$probe"
+  [ "$result" = manager-identity-v1 ]
+}

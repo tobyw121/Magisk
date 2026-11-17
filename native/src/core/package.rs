@@ -3,7 +3,6 @@ use crate::daemon::{AID_APP_END, AID_APP_START, MagiskD, to_app_id};
 #[cfg(all(feature = "check-signature", not(debug_assertions)))]
 use crate::ffi::uninstall_pkg;
 use base::WalkResult::{Abort, Continue, Skip};
-use base::const_format::concatcp;
 use base::{
     BufReadExt, Directory, FsPathBuilder, LoggedResult, ReadExt, ResultExt, Utf8CStrBuf,
     Utf8CString, cstr, error, pre_order_walk,
@@ -147,14 +146,15 @@ fn read_certificate(apk: &mut File) -> Vec<u8> {
     res.log().unwrap_or(vec![])
 }
 
-fn find_apk_path() -> Option<Utf8CString> {
+fn find_apk_path_for(pkg: &str) -> Option<Utf8CString> {
+    let prefix = format!("{pkg}-");
     let mut buf = Utf8CString::default();
     pre_order_walk(cstr!("/data/app"), |e, path| {
         if !e.is_dir() {
             return Ok(Skip);
         }
         let name = e.name();
-        if name.starts_with(concatcp!(APP_PACKAGE_NAME, "-")) {
+        if name.starts_with(&prefix) {
             // Found the APK path, we can abort now
             buf.append_path(path).append_path("base.apk");
             return Ok(Abort);
@@ -208,7 +208,7 @@ impl TrackedFile {
 }
 
 fn check_apk(tracked: &mut TrackedFile) -> bool {
-    let Some(apk) = find_apk_path() else {
+    let Some(apk) = find_apk_path_for(APP_PACKAGE_NAME) else {
         return false;
     };
 
@@ -230,8 +230,40 @@ fn check_apk(tracked: &mut TrackedFile) -> bool {
     true
 }
 
+mod identity;
+
+fn custom_manager(user: i32) -> Option<(i32, String)> {
+    use std::os::unix::fs::MetadataExt;
+    let path = "/data/adb/magisk_manager_identity";
+    let meta = std::fs::symlink_metadata(path).ok()?;
+    if !meta.is_file() || meta.uid() != 0 || meta.mode() & 0o077 != 0 || meta.len() > 32768 {
+        return None;
+    }
+    let (pkg, pinned) = identity::parse(&std::fs::read_to_string(path).ok()?)?;
+    let apk = find_apk_path_for(&pkg)?;
+    let mut fd = apk.open(OFlag::O_RDONLY | OFlag::O_CLOEXEC).ok()?;
+    if read_certificate(&mut fd) != pinned {
+        error!("pkg: hidden manager certificate mismatch");
+        return None;
+    }
+    let uid = get_package_uid(user, &pkg);
+    if !(AID_APP_START..=AID_APP_END).contains(&to_app_id(uid)) {
+        return None;
+    }
+    Some((uid, pkg))
+}
+
 impl MagiskD {
+    pub fn manager_package(&self, user: i32) -> String {
+        custom_manager(user)
+            .map(|(_, pkg)| pkg)
+            .unwrap_or_else(|| APP_PACKAGE_NAME.to_owned())
+    }
+
     pub fn get_manager_uid(&self, user: i32) -> i32 {
+        if let Some((uid, _)) = custom_manager(user) {
+            return uid;
+        }
         let mut tracked = self.manager_info.lock();
         if tracked.is_same() {
             return if &tracked.path == PACKAGES_XML {
@@ -319,4 +351,3 @@ impl MagiskD {
         0
     }
 }
-

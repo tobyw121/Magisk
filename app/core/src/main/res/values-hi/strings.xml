@@ -129,8 +129,6 @@
     <string name="settings_update_custom">कस्टम चैनल</string>
     <string name="settings_update_custom_msg">एक कस्टम URL डालें</string>
     <string name="settings_zygisk_summary">मैजिस्क को जाइगोट डेमॉन के कुछ हिस्सों को चलाएं</string>
-    <string name="settings_denylist_title">अस्वीकार सूची लागू करें</string>
-    <string name="settings_denylist_summary">अस्वीकृत सूची की प्रक्रियाओं में सभी मैजिस्क संशोधन पूर्ववत हो जाएंगे</string>
     <string name="settings_denylist_config_title">अस्वीकार सूची कॉन्फ़िगर करें</string>
     <string name="settings_denylist_config_summary">अस्वीकार सूची में शामिल की जाने वाली प्रक्रियाओं का चयन करें</string>
     <string name="settings_hosts_title">सिस्टमलेस होस्ट</string>

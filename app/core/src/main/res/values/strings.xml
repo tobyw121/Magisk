@@ -150,8 +150,6 @@
     <string name="settings_update_custom">Custom</string>
     <string name="settings_update_custom_msg">Insert a custom channel URL</string>
     <string name="settings_zygisk_summary">Run parts of Magisk in the Zygote daemon</string>
-    <string name="settings_denylist_title">Enforce DenyList</string>
-    <string name="settings_denylist_summary">Processes on the denylist will have all Magisk modifications reverted</string>
     <string name="settings_denylist_config_title">Configure DenyList</string>
     <string name="settings_denylist_config_summary">Select the processes to be included on the denylist</string>
     <string name="settings_hosts_title">Systemless hosts</string>
@@ -240,4 +238,17 @@
     <string name="reboot_apply_change">Reboot to apply changes</string>
     <string name="running_exit_title">Execution in progress</string>
     <string name="running_exit_msg">Are you sure you want to exit? The running operation may not complete.</string>
+
+    <string name="identity_title">Hide the Magisk app (experimental)</string>
+    <string name="identity_restore">Restore the Magisk app</string>
+    <string name="identity_summary">Randomize the app label, package and default process name. Use DenyList separately for selected apps.</string>
+    <string name="identity_confirmation">This installs a newly signed copy with a random name, or restores the original app when already hidden. The original is removed only after the hidden app obtains root. App preferences are not transferred. Install this Magisk version into the boot image and reboot first. Restore the original app before updates. This does not guarantee root invisibility or Play Integrity.</string>
+    <string name="identity_failure">App hiding failed. Check the Magisk log and install the matching boot image, then reboot.</string>
+    <string name="identity_restore_update">Restore the Magisk app in Settings before updating.</string>
+    <string name="root_isolation_title">Root isolation (DenyList)</string>
+    <string name="root_isolation_summary">Remove Magisk mounts from selected app processes. Enable Zygisk and reboot, then configure the DenyList.</string>
+    <string name="root_isolation_failure">DenyList could not be changed. Check root access and the Magisk log.</string>
+    <string name="denylist_update_unverified">DenyList change could not be confirmed. The displayed selection reflects the last successful read. Check root access and reopen this screen.</string>
+    <string name="denylist_defaults_applied">Apps were added to the DenyList by default. Verify Zygisk and reboot if required. You can remove individual apps in Settings.</string>
+    <string name="denylist_defaults_failed">Default DenyList setup is incomplete. Check root access and the app log. Setup retries on the next app start.</string>
 </resources>

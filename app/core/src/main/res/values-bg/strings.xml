@@ -131,8 +131,6 @@
     <string name="settings_update_custom">Потребителски</string>
     <string name="settings_update_custom_msg">Адрес на потребителски канал</string>
     <string name="settings_zygisk_summary">Изпълняване на части от Magisk в демон на zygote</string>
-    <string name="settings_denylist_title">Налагане на черен списък</string>
-    <string name="settings_denylist_summary">На процесите в черния списък ще бъдат възстановени всички модификации, направени от Magisk</string>
     <string name="settings_denylist_config_title">Настройка на черен списък</string>
     <string name="settings_denylist_config_summary">Изберете процесите, които да бъдат включени в черния списък</string>
     <string name="settings_hosts_title">Безсистемни хостове</string>

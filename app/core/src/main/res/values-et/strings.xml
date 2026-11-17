@@ -127,8 +127,6 @@
     <string name="settings_update_custom">Kohandatud</string>
     <string name="settings_update_custom_msg">Sisesta kohandatud kanali URL</string>
     <string name="settings_zygisk_summary">Käivita teatud Magiski osi zygote-protsessis</string>
-    <string name="settings_denylist_title">Jõusta keeluloend</string>
-    <string name="settings_denylist_summary">Keeluloendis olevatel protsessidel tühistatakse kõik Magiski muudatused</string>
     <string name="settings_denylist_config_title">Seadista keeluloendit</string>
     <string name="settings_denylist_config_summary">Vali keeluloendisse lisatavad protsessid</string>
     <string name="settings_hosts_title">Süsteemivaba hosts</string>

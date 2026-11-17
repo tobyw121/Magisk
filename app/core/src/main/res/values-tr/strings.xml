@@ -140,8 +140,6 @@
     <string name="settings_update_custom">Özel</string>
     <string name="settings_update_custom_msg">Özel bir kanal URL\'si girin</string>
     <string name="settings_zygisk_summary">Magisk\'in bazı kısımlarını Zygote arka plan yordamında çalıştırın</string>
-    <string name="settings_denylist_title">Reddetme Listesini Zorla</string>
-    <string name="settings_denylist_summary">Reddetme listesindeki işlemler için tüm Magisk değişiklikleri geri alınacaktır</string>
     <string name="settings_denylist_config_title">Reddetme Listesini Yapılandır</string>
     <string name="settings_denylist_config_summary">Reddetme listesine eklenecek işlemleri seçin</string>
     <string name="settings_hosts_title">Sistemsiz (Systemless) hosts</string>

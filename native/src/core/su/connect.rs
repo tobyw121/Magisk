@@ -1,9 +1,7 @@
 use super::SuInfo;
-use crate::consts::APP_PACKAGE_NAME;
 use crate::daemon::{AID_APP_START, MagiskD, to_app_id, to_user_id};
 use crate::ffi::{SuRequest, fork_dont_care};
 use ExtraVal::{Bool, Int, IntList, Str};
-use base::const_format::concatcp;
 use base::{BytesExt, error};
 use nix::sys::signal::SigSet;
 use num_traits::AsPrimitive;
@@ -74,12 +72,14 @@ impl Extra<'_> {
 impl MagiskD {
     fn exec_cmd(&self, user: &str, action: &'static str, extras: &[Extra]) {
         let mut cmd = app_process();
+        let package = self.manager_package(user.parse().unwrap_or(0));
+        let uri = format!("content://{package}.provider");
         cmd.args([
             "/system/bin",
             "com.android.commands.content.Content",
             "call",
             "--uri",
-            concatcp!("content://", APP_PACKAGE_NAME, ".provider"),
+            &uri,
             "--user",
             user,
             "--method",

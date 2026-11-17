@@ -144,8 +144,6 @@
     <string name="settings_update_custom">مخصص</string>
     <string name="settings_update_custom_msg">أدخل رابط قناة مخصصة</string>
     <string name="settings_zygisk_summary">تشغيل أجزاء من Magisk داخل عملية Zygote</string>
-    <string name="settings_denylist_title">تطبيق قائمة الحظر</string>
-    <string name="settings_denylist_summary">ستُعاد جميع تعديلات Magisk على العمليات المدرجة في قائمة الحظر</string>
     <string name="settings_denylist_config_title">ضبط قائمة الحظر</string>
     <string name="settings_denylist_config_summary">تحديد العمليات المراد إدراجها في قائمة الحظر</string>
     <string name="settings_hosts_title">ملفات Hosts بدون نظام</string>

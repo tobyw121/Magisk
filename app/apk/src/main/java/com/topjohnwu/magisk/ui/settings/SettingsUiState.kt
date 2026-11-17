@@ -3,6 +3,7 @@ package com.topjohnwu.magisk.ui.settings
 import androidx.compose.runtime.Immutable
 
 sealed interface SettingsDialog {
+    data object AppIdentity : SettingsDialog
     data class CustomChannelUrl(val initialUrl: String) : SettingsDialog
     data class DownloadPath(val initialPath: String) : SettingsDialog
 }
@@ -48,6 +49,9 @@ data class SettingsUiState(
     val selectedNamespaceModeIndex: Int = 0,
     val selectedNotificationModeIndex: Int = 0,
     val suRestrictEnabled: Boolean = false,
+
+    val denyListBusy: Boolean = false,
+    val identityBusy: Boolean = false,
 
     // Active Modal Dialog
     val activeDialog: SettingsDialog? = null,

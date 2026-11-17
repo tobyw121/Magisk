@@ -129,8 +129,6 @@
     <string name="settings_update_custom">カスタム</string>
     <string name="settings_update_custom_msg">カスタム URL を入力</string>
     <string name="settings_zygisk_summary">Magisk の一部を Zygote デーモン上で実行します</string>
-    <string name="settings_denylist_title">DenyList を適用</string>
-    <string name="settings_denylist_summary">DenyList 内のプロセスは Magisk の変更がすべて戻されます</string>
     <string name="settings_denylist_config_title">DenyList を構成</string>
     <string name="settings_denylist_config_summary">DenyList に含めるプロセスを選択します</string>
     <string name="settings_hosts_title">Systemless hosts</string>

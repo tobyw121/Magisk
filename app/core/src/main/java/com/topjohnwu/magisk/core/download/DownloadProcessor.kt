@@ -25,6 +25,10 @@ class DownloadProcessor(notifier: DownloadNotifier) : DownloadNotifier by notifi
     }
 
     suspend fun handleApp(stream: InputStream, subject: Subject.App) {
+        if (com.topjohnwu.magisk.core.tasks.AppIdentity.isHidden(context)) {
+            stream.close()
+            throw java.io.IOException(context.getString(com.topjohnwu.magisk.core.R.string.identity_restore_update))
+        }
         val external = subject.file.outputStream()
         val session = APKInstall.startSession(context)
         stream.copyAndClose(TeeOutputStream(external, session.openStream(context)))

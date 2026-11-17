@@ -136,8 +136,6 @@
     <string name="settings_update_custom">تایبەت</string>
     <string name="settings_update_custom_msg">بەستەرێکی تایبەت دابنێ</string>
     <string name="settings_zygisk_summary">کارپێکردنی بەشێکی ماجیسک لە zygote daemon</string>
-    <string name="settings_denylist_title">پێڕستی نەرێنی کراوەکان</string>
-    <string name="settings_denylist_summary">هەر ئەپێک لە پێڕستی نەرێنییەکان کاریگەریەکانی ماجیسکی لەسەر نییە</string>
     <string name="settings_denylist_config_title">دەستکاریکردنی پێڕستی نەرێنیکراوەکان</string>
     <string name="settings_denylist_config_summary">ئەو ئەپە هەڵبژێرە کە دەتەوێت نەرێنیی بکەیت</string>
     <string name="settings_hosts_title">هۆستی ناسیستەمی</string>

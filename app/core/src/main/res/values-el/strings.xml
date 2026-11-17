@@ -129,8 +129,6 @@
     <string name="settings_update_custom">Προσαρμοσμένο</string>
     <string name="settings_update_custom_msg">Εισαγωγή ενός custom URL</string>
     <string name="settings_zygisk_summary">Εκτέλεση μέρους του Magisk μέσα στο zygote daemon</string>
-    <string name="settings_denylist_title">Επιβολή Λίστας Απορρίψεων</string>
-    <string name="settings_denylist_summary">Επαναφορά όλων των τροποποιήσεων του Magisk για της διεργασίες στην λίστα απορρίψεων</string>
     <string name="settings_denylist_config_title">Τροποποίηση της Λίστας Απορρίψεων</string>
     <string name="settings_denylist_config_summary">Επιλογή διεργασίας για να συμπεριληφθεί στη λίστα απορρίψεων</string>
     <string name="settings_hosts_title">Systemless hosts</string>

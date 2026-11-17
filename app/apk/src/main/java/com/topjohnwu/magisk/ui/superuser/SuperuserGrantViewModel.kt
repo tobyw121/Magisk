@@ -7,7 +7,6 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.viewModelScope
 import com.topjohnwu.magisk.arch.AsyncLoadViewModel
 import com.topjohnwu.magisk.core.AppContext
-import com.topjohnwu.magisk.core.BuildConfig
 import com.topjohnwu.magisk.core.Config
 import com.topjohnwu.magisk.core.data.magiskdb.PolicyDao
 import com.topjohnwu.magisk.core.ktx.concurrentMap
@@ -220,7 +219,7 @@ class SuperuserGrantViewModel(
                 .asFlow()
                 .filter {
                     it.packageName != myPackage &&
-                    it.packageName != BuildConfig.APP_PACKAGE_NAME &&
+                    it.packageName != com.topjohnwu.magisk.core.AppContext.packageName &&
                     it.uid != myUid
                 }
                 .concurrentMap { appInfo ->

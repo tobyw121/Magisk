@@ -126,8 +126,6 @@
     <string name="settings_update_custom">Canal personalizada</string>
     <string name="settings_update_custom_msg">Inxerta la URL d\'una canal personalizada</string>
     <string name="settings_zygisk_summary">Executa partes de Magisk nel degorriu de Zygote</string>
-    <string name="settings_denylist_title">Forciar la llista d\'esclusión</string>
-    <string name="settings_denylist_summary">Los procesos de la llista d\'esclusión tienen toles modificaciones de Magisk anulaes</string>
     <string name="settings_denylist_config_title">Configurar la llista d\'esclusión</string>
     <string name="settings_denylist_config_summary">Seleiciona los procesos que s\'inclúin na llista d\'esclusión</string>
     <string name="settings_hosts_title">Módulu «Systemless Hosts»</string>

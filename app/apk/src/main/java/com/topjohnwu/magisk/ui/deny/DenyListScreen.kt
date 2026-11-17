@@ -84,6 +84,7 @@ fun DenyListScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val busy by viewModel.busy.collectAsStateWithLifecycle()
     val loading by viewModel.loading.collectAsStateWithLifecycle()
     val apps by viewModel.filteredApps.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
@@ -184,6 +185,7 @@ fun DenyListScreen(
                     ) { app ->
                         DenyAppCard(
                             app = app,
+                            enabled = !busy && !loading,
                             onToggleExpand = { viewModel.toggleExpanded(app) },
                             onToggleAll = { viewModel.toggleAll(app) },
                             onToggleProcess = { proc -> viewModel.toggleProcess(app, proc) }
@@ -240,6 +242,7 @@ private fun SearchInput(
 @Composable
 private fun DenyAppCard(
     app: DenyAppState,
+    enabled: Boolean,
     onToggleExpand: () -> Unit,
     onToggleAll: () -> Unit,
     onToggleProcess: (DenyProcessState) -> Unit,
@@ -297,6 +300,7 @@ private fun DenyAppCard(
                         app.checkedPercent < 1f -> ToggleableState.Indeterminate
                         else -> ToggleableState.On
                     },
+                    enabled = enabled,
                     onClick = onToggleAll
                 )
             }
@@ -310,6 +314,7 @@ private fun DenyAppCard(
                     app.processes.forEach { proc ->
                         ProcessRow(
                             proc = proc,
+                            enabled = enabled,
                             onToggle = { onToggleProcess(proc) }
                         )
                     }
@@ -322,6 +327,7 @@ private fun DenyAppCard(
 @Composable
 private fun ProcessRow(
     proc: DenyProcessState,
+    enabled: Boolean,
     onToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -331,6 +337,7 @@ private fun ProcessRow(
             .clip(RoundedCornerShape(12.dp))
             .toggleable(
                 value = proc.isEnabled,
+                enabled = enabled,
                 role = Role.Checkbox,
                 onValueChange = { onToggle() }
             )
@@ -347,6 +354,7 @@ private fun ProcessRow(
         Spacer(Modifier.width(8.dp))
         Checkbox(
             checked = proc.isEnabled,
+            enabled = enabled,
             onCheckedChange = null
         )
     }

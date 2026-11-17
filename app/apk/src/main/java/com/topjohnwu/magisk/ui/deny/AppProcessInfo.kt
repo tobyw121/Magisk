@@ -96,7 +96,7 @@ data class AppProcessInfo(
                 if (hasIsolated) {
                     val prefix = "${info.processName ?: info.packageName}:"
                     val isEnabled = appDenyList.any {
-                        it.packageName == ISOLATED_MAGIC && it.process.startsWith(prefix)
+                        it.packageName == ISOLATED_MAGIC && prefix.startsWith(it.process)
                     }
                     result.add(ProcessInfo(prefix, ISOLATED_MAGIC, isEnabled))
                 }

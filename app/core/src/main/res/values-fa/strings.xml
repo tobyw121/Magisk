@@ -134,8 +134,6 @@
     <string name="settings_update_custom">شخصی سازی شده</string>
     <string name="settings_update_custom_msg">اضافه کردن یک URL سفارشی</string>
     <string name="settings_zygisk_summary">اجرای بخش‌هایی از Magisk در سرویس Zygote</string>
-    <string name="settings_denylist_title">اعمال لیست منع</string>
-    <string name="settings_denylist_summary">فرآیندهای موجود در لیست منع تمام تغییرات Magisk را از دست خواهند داد</string>
     <string name="settings_denylist_config_title">پیکربندی لیست منع</string>
     <string name="settings_denylist_config_summary">انتخاب فرآیندهایی که باید در لیست منع قرار گیرند</string>
     <string name="settings_hosts_title">نصب بدون حذف یا تغییر در فایل ها</string>
